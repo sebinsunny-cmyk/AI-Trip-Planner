@@ -10,13 +10,6 @@ import { tm, fonts } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
-const BADGES = [
-  { emoji: '✈️', label: 'Frequent Flyer',  desc: '20+ trips booked',       color: '#60A5FA' },
-  { emoji: '💰', label: 'Budget Champ',    desc: 'Under budget 8× in a row', color: '#00C9A7' },
-  { emoji: '⚡', label: 'Early Bird',      desc: 'Always checks in first',   color: '#F5A623' },
-  { emoji: '🤖', label: 'Agent Native',    desc: 'Zero manual bookings',     color: '#A78BFA' },
-];
-
 const STATS = [
   { label: 'Trips this year', value: '23',   icon: Plane,       color: '#60A5FA' },
   { label: 'Hours saved',     value: '47h',  icon: Clock,       color: '#00C9A7' },
@@ -149,44 +142,6 @@ export function ProfileScreen() {
               <Icon size={15} color={color} />
               <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary }}>{value}</span>
               <span style={{ fontSize: '9px', color: tm.textSecondary, fontFamily: fonts.mono, textAlign: 'center', lineHeight: 1.3 }}>{label}</span>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* ── Badges ── */}
-        <SectionLabel label="ACHIEVEMENTS" />
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: '4px', marginBottom: '16px' }}>
-          {BADGES.map((badge, i) => (
-            <motion.div
-              key={badge.label}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.07 }}
-              style={{
-                flexShrink: 0,
-                width: '86px',
-                background: tm.bgSurface,
-                border: `1px solid ${badge.color}30`,
-                borderRadius: '14px',
-                padding: '12px 8px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-              }}
-            >
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '12px',
-                background: `${badge.color}18`,
-                border: `1px solid ${badge.color}35`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '20px',
-              }}>
-                {badge.emoji}
-              </div>
-              <span style={{ fontSize: '10px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary, textAlign: 'center', lineHeight: 1.2 }}>
-                {badge.label}
-              </span>
-              <span style={{ fontSize: '9px', color: tm.textSecondary, fontFamily: fonts.mono, textAlign: 'center', lineHeight: 1.3 }}>
-                {badge.desc}
-              </span>
             </motion.div>
           ))}
         </div>
