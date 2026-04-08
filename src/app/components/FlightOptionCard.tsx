@@ -30,6 +30,29 @@ const AIRLINE_EMOJI: Record<string, string> = {
   Vistara: '🟣',
 };
 
+// ─── Flight insight helpers ───────────────────────────────────────────────────
+
+type InsightTag = { label: string; color: string };
+
+function parseDurationMinutes(dur: string): number {
+  const h = dur.match(/(\d+)h/);
+  const m = dur.match(/(\d+)m/);
+  return (h ? +h[1] * 60 : 0) + (m ? +m[1] : 0);
+}
+
+function getFlightInsight(flight: FlightOption, allFlights: FlightOption[]): InsightTag | null {
+  if (allFlights.length === 0) return null;
+  const minPrice    = Math.min(...allFlights.map(f => f.price));
+  const minDuration = Math.min(...allFlights.map(f => parseDurationMinutes(f.duration)));
+  const minCarbon   = Math.min(...allFlights.map(f => f.carbonKg));
+  if (flight.price === minPrice)                             return { label: 'Cheapest',   color: '#22C55E' };
+  if (parseDurationMinutes(flight.duration) === minDuration) return { label: 'Fastest',    color: '#3B82F6' };
+  if (flight.stops === 0)                                    return { label: 'Non-stop',   color: tm.accentTeal };
+  if (flight.carbonKg === minCarbon)                         return { label: 'Greenest',   color: '#16A34A' };
+  if (flight.recommended)                                    return { label: 'Best Value', color: tm.accentAmber };
+  return null;
+}
+
 interface FlightOptionCardProps {
   flights: FlightOption[];           // outbound
   returnFlights?: FlightOption[];    // return (round trip)
@@ -70,7 +93,7 @@ function SectionHeader({
 
 // ─── Single flight row ────────────────────────────────────────────────────────
 function FlightRow({
-  flight, isSelected, accent, origin, destination, onSelect, expandedReason, onToggleReason,
+  flight, isSelected, accent, origin, destination, onSelect, expandedReason, onToggleReason, allFlights = [],
 }: {
   flight: FlightOption;
   isSelected: boolean;
@@ -80,7 +103,9 @@ function FlightRow({
   onSelect: () => void;
   expandedReason: boolean;
   onToggleReason: (e: React.MouseEvent) => void;
+  allFlights?: FlightOption[];
 }) {
+  const insight = getFlightInsight(flight, allFlights);
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -163,6 +188,21 @@ function FlightRow({
           <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px' }}>{destination}</div>
         </div>
       </div>
+
+      {/* Insight chip */}
+      {insight && (
+        <div style={{ marginBottom: '10px' }}>
+          <div style={{
+            display: 'inline-block',
+            background: `${insight.color}1A`, border: `1px solid ${insight.color}45`,
+            borderRadius: '20px', padding: '2px 9px',
+          }}>
+            <span style={{ fontSize: '10px', color: insight.color, fontFamily: fonts.mono, fontWeight: 700, letterSpacing: '0.02em' }}>
+              {insight.label}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Price + carbon + radio */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -287,6 +327,7 @@ export function FlightOptionCard({
           destination={destination}
           onSelect={() => setSelectedOutboundId(flight.id)}
           expandedReason={expandedReasons.has(flight.id)}
+          allFlights={flights}
           onToggleReason={e => {
             e.stopPropagation();
             setExpandedReasons(prev => {
@@ -319,6 +360,7 @@ export function FlightOptionCard({
               destination={origin}
               onSelect={() => setSelectedReturnId(flight.id)}
               expandedReason={expandedReasons.has(flight.id)}
+              allFlights={returnFlights}
               onToggleReason={e => {
                 e.stopPropagation();
                 setExpandedReasons(prev => {

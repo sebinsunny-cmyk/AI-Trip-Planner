@@ -208,36 +208,6 @@ export function TripConfirmedScreen() {
         </div>
       </motion.div>
 
-      {/* PNR */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.75 }}
-        style={{
-          background: `${tm.accentAmber}10`,
-          border: `1px solid ${tm.accentAmber}30`,
-          borderRadius: '12px',
-          padding: '10px 20px',
-          marginBottom: '28px',
-          width: '100%',
-        }}
-      >
-        <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginBottom: '4px' }}>
-          PNR NUMBER
-        </div>
-        <div
-          style={{
-            fontSize: '22px',
-            fontFamily: fonts.mono,
-            fontWeight: 600,
-            color: tm.accentAmber,
-            letterSpacing: '4px',
-          }}
-        >
-          XY7K29
-        </div>
-      </motion.div>
-
       {/* Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
