@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Mic, ChevronRight, Plane } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
+import { BookingProgressBar } from '../components/BookingProgressBar';
 
 const UPCOMING_TRIPS = [
   {
@@ -30,6 +31,15 @@ const UPCOMING_TRIPS = [
   },
 ];
 
+const STATUS_ORDER: Record<string, number> = {
+  'Booking in progress': 0,
+  'confirmed': 1,
+  'completed': 2,
+};
+
+const SORTED_TRIPS = [...UPCOMING_TRIPS].sort(
+  (a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99),
+);
 
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -223,7 +233,7 @@ export function HomeScreen() {
           </button>
         </div>
 
-        {UPCOMING_TRIPS.map((trip, i) => (
+        {SORTED_TRIPS.map((trip, i) => (
           <motion.div
             key={trip.id}
             initial={{ opacity: 0, y: 15 }}
@@ -239,7 +249,7 @@ export function HomeScreen() {
             }}
             onClick={() =>
               trip.status === 'Booking in progress'
-                ? navigate('/agent')
+                ? navigate('/agent-auto')
                 : navigate(`/trips/${trip.id}`)
             }
           >
@@ -341,6 +351,9 @@ export function HomeScreen() {
                 {trip.price}
               </span>
             </div>
+
+            {/* Live booking progress */}
+            {trip.status === 'Booking in progress' && <BookingProgressBar />}
           </motion.div>
         ))}
       </div>

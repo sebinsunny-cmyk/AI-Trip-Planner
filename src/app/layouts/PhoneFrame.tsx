@@ -6,11 +6,14 @@ import { useTheme } from '../context/ThemeContext';
 import { Signal, Wifi, Battery } from 'lucide-react';
 
 const HIDE_BOTTOM_NAV = ['/new-trip', '/trip-params', '/agent-auto', '/unified-review', '/agent', '/confirmed', '/notifications', '/profile', '/signin'];
+const HIDE_BOTTOM_NAV_PREFIXES = ['/onboarding'];
 
 export function PhoneFrame() {
   const location = useLocation();
   const { isDark } = useTheme();
-  const hideBottomNav = HIDE_BOTTOM_NAV.includes(location.pathname) || location.pathname.startsWith('/trips/');
+  const hideBottomNav = HIDE_BOTTOM_NAV.includes(location.pathname)
+    || location.pathname.startsWith('/trips/')
+    || HIDE_BOTTOM_NAV_PREFIXES.some(p => location.pathname.startsWith(p));
 
   const pageBg = isDark
     ? 'radial-gradient(ellipse at 50% 30%, #1a1f2e 0%, #070A0E 70%)'

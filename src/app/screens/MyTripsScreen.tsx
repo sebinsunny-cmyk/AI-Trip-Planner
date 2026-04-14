@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Plane, ChevronRight, Plus } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
+import { BookingProgressBar } from '../components/BookingProgressBar';
 import { ALL_TRIPS } from '../data/trips';
 
 type Filter = 'All' | 'Upcoming' | 'Completed' | 'In Progress';
@@ -172,7 +173,7 @@ export function MyTripsScreen() {
             transition={{ delay: i * 0.08 }}
             onClick={() =>
               trip.status === 'Booking in progress'
-                ? navigate('/agent')
+                ? navigate('/agent-auto')
                 : navigate(`/trips/${trip.id}`)
             }
             style={{
@@ -257,6 +258,9 @@ export function MyTripsScreen() {
                 {trip.price}
               </span>
             </div>
+
+            {/* Live booking progress */}
+            {trip.status === 'Booking in progress' && <BookingProgressBar />}
           </motion.div>
         ))}
       </div>

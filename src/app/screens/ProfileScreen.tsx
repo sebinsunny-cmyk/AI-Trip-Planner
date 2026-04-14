@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import {
   ArrowLeft, Edit3, Mail, Phone, User, Calendar,
   Globe, CreditCard, Plane, Clock, TrendingUp, ShieldCheck,
-  LogOut, Copy, Check,
+  LogOut, Copy, Check, RotateCcw,
 } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
@@ -153,6 +153,26 @@ export function ProfileScreen() {
         {/* ── Travel Identity ── */}
         <SectionLabel label="TRAVEL IDENTITY" />
         <InfoCard rows={TRAVEL_ID} copyable={true} copied={copied} onCopy={copyField} />
+
+        {/* ── Reset Preferences ── */}
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            localStorage.removeItem('tripmind-onboarded');
+            signOut();
+            navigate('/signin', { replace: true });
+          }}
+          style={{
+            width: '100%', padding: '14px', borderRadius: '14px', marginBottom: '10px',
+            background: `${tm.accentAmber}10`, border: `1px solid ${tm.accentAmber}30`,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+          }}
+        >
+          <RotateCcw size={15} color={tm.accentAmber} />
+          <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 700, color: tm.accentAmber }}>
+            Reset Preferences
+          </span>
+        </motion.button>
 
         {/* ── Sign out ── */}
         <motion.button
