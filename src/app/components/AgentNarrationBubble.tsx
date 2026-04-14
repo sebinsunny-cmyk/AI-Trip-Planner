@@ -8,12 +8,14 @@ export type BubbleStatus = 'typing' | 'active' | 'done' | 'failed';
 export interface NarrationBubble {
   id: string;
   step: number;
+  header?: string; // bubble title, e.g. "Step 1: Searching for flights"
   text: string;
   status: BubbleStatus;
   timestamp: string;
   integration?: string;
   integrationIcon?: 'calendar' | 'flight' | 'cab' | 'hotel' | 'expense';
   completionText?: string; // shown in collapsed done row instead of truncated text
+  accent?: string; // active border color, defaults to accentAmber
 }
 
 function IntegrationBadge({ name, icon }: { name: string; icon?: string }) {
@@ -169,7 +171,7 @@ export function AgentNarrationBubble({
       transition={{ type: 'spring', stiffness: 280, damping: 28 }}
       style={{
         background: tm.bgSurface,
-        border: `1px solid ${collapsible && !isExpanded ? tm.borderSubtle : isActive ? `${tm.accentAmber}30` : tm.borderSubtle}`,
+        border: `1px solid ${collapsible && !isExpanded ? tm.borderSubtle : isActive ? `${bubble.accent ?? tm.accentAmber}30` : tm.borderSubtle}`,
         borderRadius: '16px',
         marginBottom: '10px',
         overflow: 'hidden',
@@ -248,16 +250,8 @@ export function AgentNarrationBubble({
                 🤖
               </motion.div>
               <span style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
-                TripMind
+                {bubble.header ?? 'TripMind'}
               </span>
-              {bubble.step && (
-                <span style={{
-                  fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono,
-                  background: tm.bgElevated, padding: '1px 6px', borderRadius: '4px',
-                }}>
-                  Step {bubble.step}
-                </span>
-              )}
             </div>
             <span style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>
               {bubble.timestamp}
