@@ -14,6 +14,7 @@ export interface HotelOption {
   amenities: string[];
   recommended?: boolean;
   reasoning?: string;
+  image?: string;
 }
 
 interface HotelOptionCardProps {
@@ -54,17 +55,46 @@ export function HotelOptionCard({ hotels, onSelect }: HotelOptionCardProps) {
               border: `1px solid ${isSelected ? `${tm.accentAmber}60` : tm.borderSubtle}`,
               borderLeft: `3px solid ${isSelected ? tm.accentAmber : tm.borderSubtle}`,
               borderRadius: '16px',
-              padding: '14px',
+              overflow: 'hidden',
               marginBottom: '10px',
               cursor: 'pointer',
               transition: 'border-color 0.2s ease',
             }}
           >
+            {/* Hotel banner */}
+            <div style={{ position: 'relative', height: '90px', overflow: 'hidden' }}>
+              {hotel.image ? (
+                <img src={hotel.image} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <div style={{
+                  width: '100%', height: '100%',
+                  background: hotel.stars >= 5
+                    ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)'
+                    : hotel.stars >= 4
+                    ? 'linear-gradient(135deg, #2d1b4e 0%, #4a2c6e 50%, #6b3fa0 100%)'
+                    : 'linear-gradient(135deg, #1a3a2e 0%, #1e4d3a 50%, #2d6a4f 100%)',
+                }} />
+              )}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.6) 100%)' }} />
+              {hotel.recommended && (
+                <span style={{
+                  position: 'absolute', top: '8px', right: '8px',
+                  fontSize: '9px', fontFamily: fonts.mono, fontWeight: 700,
+                  color: '#ffffff', background: tm.accentAmber,
+                  borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.04em',
+                }}>
+                  BEST FIT
+                </span>
+              )}
+            </div>
+
+            {/* Card body */}
+            <div style={{ padding: '14px' }}>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  {hotel.recommended && (
+                  {false && (
                     <span style={{
                       fontSize: '9px', fontFamily: fonts.mono, fontWeight: 700,
                       color: '#ffffff', background: tm.accentAmber,
@@ -138,6 +168,7 @@ export function HotelOptionCard({ hotels, onSelect }: HotelOptionCardProps) {
                 </p>
               </motion.div>
             )}
+            </div>{/* end card body */}
           </motion.div>
         );
       })}

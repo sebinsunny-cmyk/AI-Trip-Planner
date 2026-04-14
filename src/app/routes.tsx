@@ -17,7 +17,9 @@ import { ProfileScreen } from './screens/ProfileScreen';
 import { SignInScreen } from './screens/SignInScreen';
 import { OnboardingWelcomeScreen } from './screens/OnboardingWelcomeScreen';
 import { OnboardingTourScreen } from './screens/OnboardingTourScreen';
-import { OnboardingProfileScreen } from './screens/OnboardingProfileScreen';
+import { OnboardingNameScreen } from './screens/OnboardingNameScreen';
+import { OnboardingContactScreen } from './screens/OnboardingContactScreen';
+import { OnboardingLocationScreen } from './screens/OnboardingLocationScreen';
 import { OnboardingPrefsFlightScreen } from './screens/OnboardingPrefsFlightScreen';
 import { OnboardingPrefsHotelScreen } from './screens/OnboardingPrefsHotelScreen';
 import { OnboardingPermissionsScreen } from './screens/OnboardingPermissionsScreen';
@@ -49,14 +51,17 @@ export const router = createBrowserRouter([
           { path: 'notifications', Component: NotificationsScreen },
           { path: 'profile', Component: ProfileScreen },
 
-          // Onboarding flow — protected (user must be signed in)
-          { path: 'onboarding', Component: OnboardingWelcomeScreen },
-          { path: 'onboarding/tour', Component: OnboardingTourScreen },
-          { path: 'onboarding/profile', Component: OnboardingProfileScreen },
-          { path: 'onboarding/prefs-flight', Component: OnboardingPrefsFlightScreen },
-          { path: 'onboarding/prefs-hotel', Component: OnboardingPrefsHotelScreen },
-          { path: 'onboarding/permissions', Component: OnboardingPermissionsScreen },
-          { path: 'onboarding/all-set', Component: OnboardingAllSetScreen },
+          // Onboarding flow — Nova-led, protected (user must be signed in)
+          // welcome → tour → name → contact → location → prefs-flight → prefs-hotel → permissions → all-set
+          { path: 'onboarding',              Component: OnboardingWelcomeScreen    },
+          { path: 'onboarding/tour',         Component: OnboardingTourScreen       },
+          { path: 'onboarding/name',         Component: OnboardingNameScreen       },
+          { path: 'onboarding/contact',      Component: OnboardingContactScreen    },
+          { path: 'onboarding/location',     Component: OnboardingLocationScreen   },
+          { path: 'onboarding/prefs-flight', Component: OnboardingPrefsFlightScreen},
+          { path: 'onboarding/prefs-hotel',  Component: OnboardingPrefsHotelScreen },
+          { path: 'onboarding/permissions',  Component: OnboardingPermissionsScreen},
+          { path: 'onboarding/all-set',      Component: OnboardingAllSetScreen     },
         ],
       },
     ],

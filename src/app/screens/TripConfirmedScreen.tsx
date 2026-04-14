@@ -294,7 +294,7 @@ export function TripConfirmedScreen() {
         }}
       >
         <Home size={14} color={tm.textSecondary} />
-        Back to Dashboard
+        Back to Home
       </motion.button>
     </div>
   );
