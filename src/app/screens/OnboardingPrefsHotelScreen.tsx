@@ -1,124 +1,193 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
+import { NovaBubble, StepDots } from '../components/NovaBubble';
 
-function StepBar({ step, total }: { step: number; total: number }) {
+/* ─── Data ────────────────────────────────────────────────────────────────── */
+
+const HOTEL_TIERS = [
+  { id: '3 Star', emoji: '🏨', label: 'Budget',   sub: '3★  Comfortable' },
+  { id: '4 Star', emoji: '🏩', label: 'Comfort',  sub: '4★  Popular pick' },
+  { id: '5 Star', emoji: '🏰', label: 'Premium',  sub: '5★  Full service' },
+];
+
+const CAB_TYPES = ['Sedan', 'SUV', 'Mini', 'No preference'];
+const MEAL_PREFS = ['Vegetarian', 'Non-Veg', 'Vegan', 'Jain', 'Any'];
+
+/* ─── Sub-components ──────────────────────────────────────────────────────── */
+
+function HotelGrid({ selected, onChange }: { selected: string; onChange: (v: string) => void }) {
   return (
-    <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < step ? tm.accentAmber : tm.borderSubtle, transition: 'background 0.3s' }} />
-      ))}
+    <div style={{ marginBottom: '22px' }}>
+      <div style={{
+        fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono,
+        fontWeight: 600, letterSpacing: '0.07em', marginBottom: '10px',
+      }}>
+        HOTEL TIER
+      </div>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {HOTEL_TIERS.map(({ id, emoji, label, sub }, i) => {
+          const active = selected === id;
+          return (
+            <motion.button
+              key={id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.07 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onChange(id)}
+              style={{
+                flex: 1, padding: '14px 6px', borderRadius: '14px',
+                background: active ? `${tm.accentAmber}14` : tm.bgSurface,
+                border: `1.5px solid ${active ? tm.accentAmber : tm.borderSubtle}`,
+                cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+                transition: 'all 0.18s',
+              }}
+            >
+              <span style={{ fontSize: '24px', lineHeight: 1 }}>{emoji}</span>
+              <div>
+                <div style={{
+                  fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700,
+                  color: active ? tm.accentAmber : tm.textPrimary,
+                }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px' }}>
+                  {sub}
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function ChipGroup({ label, options, selected, onChange }: {
-  label: string; options: string[]; selected: string; onChange: (v: string) => void;
+function ChipRow({ label, options, selected, onChange, accent = tm.accentAmber }: {
+  label: string; options: string[]; selected: string;
+  onChange: (v: string) => void; accent?: string;
 }) {
   return (
     <div style={{ marginBottom: '20px' }}>
-      <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono, fontWeight: 600, marginBottom: '10px', letterSpacing: '0.07em' }}>
+      <div style={{
+        fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono,
+        fontWeight: 600, letterSpacing: '0.07em', marginBottom: '10px',
+      }}>
         {label}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        {options.map(opt => (
-          <motion.button
-            key={opt}
-            whileTap={{ scale: 0.94 }}
-            onClick={() => onChange(opt)}
-            style={{
-              padding: '9px 18px', borderRadius: '22px',
-              border: `1px solid ${selected === opt ? tm.accentAmber : tm.borderSubtle}`,
-              background: selected === opt ? `${tm.accentAmber}15` : tm.bgSurface,
-              cursor: 'pointer', fontSize: '13px', fontFamily: fonts.body,
-              color: selected === opt ? tm.accentAmber : tm.textPrimary,
-              fontWeight: selected === opt ? 700 : 400,
-            }}
-          >
-            {opt}
-          </motion.button>
-        ))}
+        {options.map(opt => {
+          const active = selected === opt;
+          return (
+            <motion.button
+              key={opt}
+              whileTap={{ scale: 0.94 }}
+              onClick={() => onChange(opt)}
+              style={{
+                padding: '8px 16px', borderRadius: '22px',
+                border: `1px solid ${active ? accent : tm.borderSubtle}`,
+                background: active ? `${accent}15` : tm.bgSurface,
+                cursor: 'pointer', fontSize: '13px', fontFamily: fonts.body,
+                color: active ? accent : tm.textPrimary,
+                fontWeight: active ? 700 : 400,
+              }}
+            >
+              {opt}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
+/* ─── Screen ──────────────────────────────────────────────────────────────── */
+
 export function OnboardingPrefsHotelScreen() {
   const navigate = useNavigate();
-  const [hotelStars, setHotelStars] = useState('4 Star');
-  const [roomType,   setRoomType]   = useState('Standard');
-  const [cabType,    setCabType]    = useState('Sedan');
-  const [mealPref,   setMealPref]   = useState('No preference');
+  const [hotelTier, setHotelTier] = useState('4 Star');
+  const [cabType,   setCabType]   = useState('Sedan');
+  const [mealPref,  setMealPref]  = useState('Any');
 
   function proceed() { navigate('/onboarding/permissions'); }
 
   return (
-    <div style={{ background: tm.bgPrimary, height: '100%', display: 'flex', flexDirection: 'column', fontFamily: fonts.body }}>
-      {/* Header */}
-      <div style={{ padding: '20px 20px 0', flexShrink: 0 }}>
-        <StepBar step={3} total={4} />
-        <div style={{ marginTop: '4px' }}>
-          <span style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono }}>Step 3 of 4</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '10px 0 4px' }}>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => navigate('/onboarding/prefs-flight')}
-            style={{ width: '32px', height: '32px', borderRadius: '50%', background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-          >
-            <ArrowLeft size={15} color={tm.textPrimary} />
-          </motion.button>
-          <h1 style={{ fontSize: '22px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary, margin: 0 }}>
-            Hotel &amp; cab
-          </h1>
-        </div>
-        <p style={{ fontSize: '13px', color: tm.textSecondary, fontFamily: fonts.mono, margin: '0 0 16px', paddingLeft: '42px' }}>
-          Your preferences for stays and ground transport
-        </p>
+    <div style={{
+      background: tm.bgPrimary, height: '100%',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Top bar */}
+      <div style={{
+        padding: '20px 20px 0',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexShrink: 0,
+      }}>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate('/onboarding/prefs-flight')}
+          style={{
+            width: 32, height: 32, borderRadius: '50%',
+            background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <ArrowLeft size={15} color={tm.textPrimary} />
+        </motion.button>
+        <StepDots step={6} />
       </div>
 
-      {/* Scrollable prefs */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px 16px', scrollbarWidth: 'none' }}>
-        <ChipGroup
-          label="HOTEL STARS"
-          options={['5 Star', '4 Star', '3 Star', 'Any']}
-          selected={hotelStars}
-          onChange={setHotelStars}
-        />
-        <ChipGroup
-          label="ROOM TYPE"
-          options={['Standard', 'Deluxe', 'Suite', 'Day use']}
-          selected={roomType}
-          onChange={setRoomType}
-        />
-        <ChipGroup
+      {/* Nova question */}
+      <div style={{ paddingTop: '22px', flexShrink: 0 }}>
+        <NovaBubble message="After a long day of meetings — where do you like to stay?" />
+      </div>
+
+      {/* Prefs content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 0', scrollbarWidth: 'none' }}>
+        <HotelGrid selected={hotelTier} onChange={setHotelTier} />
+        <ChipRow
           label="CAB TYPE"
-          options={['Sedan', 'SUV', 'Mini', 'No preference']}
+          options={CAB_TYPES}
           selected={cabType}
           onChange={setCabType}
+          accent="#00C9A7"
         />
-        <ChipGroup
+        <ChipRow
           label="MEAL PREFERENCE"
-          options={['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Jain', 'No preference']}
+          options={MEAL_PREFS}
           selected={mealPref}
           onChange={setMealPref}
+          accent="#7C3AED"
         />
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '12px 20px 36px', flexShrink: 0, borderTop: `1px solid ${tm.borderSubtle}`, display: 'flex', flexDirection: 'column', gap: '10px', background: tm.bgPrimary }}>
+      <div style={{
+        padding: '12px 20px 36px', flexShrink: 0,
+        borderTop: `1px solid ${tm.borderSubtle}`,
+        display: 'flex', flexDirection: 'column', gap: '10px',
+        background: tm.bgPrimary,
+      }}>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={proceed}
-          style={{ width: '100%', padding: '15px', borderRadius: '14px', border: 'none', background: tm.accentAmber, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          style={{
+            width: '100%', padding: '15px', borderRadius: '14px', border: 'none',
+            background: tm.accentAmber, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+          }}
         >
-          <span style={{ fontSize: '15px', fontFamily: fonts.heading, fontWeight: 700, color: '#fff' }}>Continue</span>
-          <ChevronRight size={16} color="#fff" />
+          <span style={{ fontSize: '15px', fontFamily: fonts.heading, fontWeight: 700, color: '#fff' }}>
+            Looks good →
+          </span>
         </motion.button>
         <button onClick={proceed} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-          <span style={{ fontSize: '13px', fontFamily: fonts.body, color: tm.textSecondary }}>Skip — use defaults</span>
+          <span style={{ fontSize: '13px', fontFamily: fonts.body, color: tm.textSecondary }}>
+            Use defaults
+          </span>
         </button>
       </div>
     </div>
