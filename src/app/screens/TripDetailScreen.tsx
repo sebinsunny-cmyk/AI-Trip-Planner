@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -1140,6 +1140,14 @@ export function TripDetailScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('Itinerary');
 
   const trip: TripDetail | undefined = id != null ? TRIP_DETAILS[id] : undefined;
+
+  useEffect(() => {
+    if (trip?.status === 'Booking in progress') {
+      navigate('/agent-auto', { replace: true });
+    }
+  }, [trip, navigate]);
+
+  if (trip?.status === 'Booking in progress') return null;
 
   if (!trip) {
     return (
