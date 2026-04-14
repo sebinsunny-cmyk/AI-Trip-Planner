@@ -14,6 +14,8 @@ import { CalendarPreview } from '../components/CalendarPreview';
 import { AlertBanner } from '../components/AlertBanner';
 import { TripInputBar } from '../components/TripInputBar';
 import { ReminderToastContainer, useReminderToasts, TRIP_REMINDERS } from '../components/ReminderToast';
+const hotelExterior = '/hotels/hotel-exterior.jpg';
+const hotelMeeting = '/hotels/hotels-meeting.jpg';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -138,6 +140,7 @@ const HOTELS: HotelOption[] = [
     amenities: ['Wifi', 'Breakfast', 'Parking'],
     recommended: true,
     reasoning: 'Closest 5-star to your BKC meeting venue. Check-in after your meeting and check out before your 7:15 PM flight — no extra travel needed.',
+    image: hotelExterior,
   },
   {
     id: 'h2',
@@ -148,6 +151,7 @@ const HOTELS: HotelOption[] = [
     rating: '4.8',
     ratingCount: '1.4k',
     amenities: ['Wifi', 'Breakfast'],
+    image: hotelMeeting,
   },
   {
     id: 'h3',
@@ -158,6 +162,7 @@ const HOTELS: HotelOption[] = [
     rating: '4.2',
     ratingCount: '3.8k',
     amenities: ['Wifi', 'Parking'],
+    image: hotelMeeting,
   },
 ];
 
@@ -173,26 +178,31 @@ const CALENDAR_EVENTS_SYNC = [
 
 interface StepDef {
   step: number;
+  header: string; // bubble title shown in the header row
   integration: string;
   integrationIcon: 'calendar' | 'flight' | 'cab' | 'hotel' | 'expense';
   text: string;
   isGate?: boolean;
   duration: number; // ms before auto-advancing (0 = gate/manual)
   completionText?: string; // shown in collapsed accordion row when done
+  accent?: string; // active bubble border color
 }
 
 const STEP_DEFS: StepDef[] = [
   {
     step: 1,
+    header: 'Step 1: Searching for flights',
     integration: 'MakeMyTrip',
     integrationIcon: 'flight',
     text: "I found flights for both legs of your trip. For the outbound I'd recommend the 6:20 AM IndiGo (₹4,850, non-stop, arrives 8:10 AM). For the return, the 7:15 PM IndiGo gets you home by 9 PM with a comfortable buffer after your 2 PM meeting. Pick your preferred options below.",
     isGate: true,
     duration: 0,
     completionText: '✈️ Flights booked — IndiGo 6E-342 + 6E-351',
+    accent: '#3B82F6',
   },
   {
     step: 2,
+    header: 'Step 2: Searching for cabs',
     integration: 'Uber / Ola',
     integrationIcon: 'cab',
     text: "Now let me sort your ground transport. You land at T2 at 8:10 AM — I'm adding a 20-minute buffer for deplaning. I'll book a cab for 8:30 AM pickup. For the return, your meeting ends at 4 PM — I'm recommending a 5:00 PM cab from BKC to catch your 7:15 PM flight. That's a comfortable 2h 15m buffer.",
@@ -202,6 +212,7 @@ const STEP_DEFS: StepDef[] = [
   },
   {
     step: 3,
+    header: 'Step 3: Searching for hotels',
     integration: 'Hotels.com',
     integrationIcon: 'hotel',
     text: "You land at 8:10 AM with a 2 PM meeting — that's nearly 6 hours. I found 3 great options near BKC. I'd recommend the Hyatt Regency — it's 0.4 km from your venue, a 5-star, and you can check in right after landing. Want me to book it, or would you prefer to skip?",
@@ -211,6 +222,7 @@ const STEP_DEFS: StepDef[] = [
   },
   {
     step: 4,
+    header: 'Step 4: Preparing trip summary',
     integration: 'TripMind',
     integrationIcon: 'flight',
     text: "Your full day is taking shape. Here's how April 15th looks — I've built a detailed itinerary with buffers baked in. Tap any item to see my reasoning for that time slot.",
@@ -219,6 +231,7 @@ const STEP_DEFS: StepDef[] = [
   },
   {
     step: 5,
+    header: 'Step 5: Syncing calendar',
     integration: 'Google Calendar',
     integrationIcon: 'calendar',
     text: "I'm adding all of this to your Google Calendar now — the flights, both cab pickups, and I've blocked your full day as 'Travel: Mumbai'. I've also set 3 reminders: the night before, 2 hours before cab, and 30 minutes before cab.",
@@ -227,6 +240,7 @@ const STEP_DEFS: StepDef[] = [
   },
   {
     step: 6,
+    header: 'Step 6: Submitting expense',
     integration: 'Concur Expense',
     integrationIcon: 'expense',
     text: "Here's your complete trip cost breakdown. Total spend is ₹13,290 — well within your ₹15,000 policy limit. Submitting for pre-approval automatically.",
@@ -283,12 +297,14 @@ export function AgentLiveScreen() {
     const bubble: NarrationBubble = {
       id: `bubble-${stepNum}`,
       step: stepNum,
+      header: def.header,
       text: def.text,
       status: 'typing',
       timestamp: getTimestamp(),
       integration: def.integration,
       integrationIcon: def.integrationIcon,
       completionText: def.completionText,
+      accent: def.accent,
     };
 
     setBubbles(prev => {
@@ -439,7 +455,7 @@ export function AgentLiveScreen() {
               emoji="✈️"
               title="Flights Found"
               subtitle="Round trip · COK ↔ BOM · Apr 15 · Select outbound & return"
-              accent={tm.accentAmber}
+              accent="#3B82F6"
             />
             <FlightOptionCard
               flights={FLIGHTS}
@@ -535,7 +551,7 @@ export function AgentLiveScreen() {
       case 1:
         return (
           <>
-            <SectionBanner emoji="✈️" title="Flights Booked" subtitle="Round trip · COK ↔ BOM · IndiGo 6E-342 + 6E-351" accent={tm.accentAmber} />
+            <SectionBanner emoji="✈️" title="Flights Booked" subtitle="Round trip · COK ↔ BOM · IndiGo 6E-342 + 6E-351" accent="#3B82F6" />
             <FlightOptionCard
               flights={FLIGHTS}
               returnFlights={RETURN_FLIGHTS}

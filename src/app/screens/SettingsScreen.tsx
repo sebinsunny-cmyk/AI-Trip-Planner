@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, Globe, Car, Plane, Shield, Sun, Moon, Check, X } from 'lucide-react';
+import { ChevronRight, Globe, Car, Plane, Shield, Sun, Moon, Check, X, Building2, Package, MapPin, Navigation } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
+import uberLogo from '../../assets/logos/uber-logo.webp';
+import olaLogo from '../../assets/logos/white_ola_logo.png';
+import makemtLogo from '../../assets/logos/makemt.png';
 import { useNavigate } from 'react-router';
 
 interface Integration {
@@ -14,19 +17,37 @@ interface Integration {
   color: string;
 }
 
+const INTEGRATION_LOGOS: Record<string, string> = {
+  gcal:  'https://ssl.gstatic.com/calendar/images/dynamiclogo_2020q4/calendar_2_2x.png',
+  gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
+  uber:  uberLogo,
+  ola:   olaLogo,
+  mmt:   makemtLogo,
+};
+
 const INTEGRATIONS: Integration[] = [
-  { id: 'gcal', name: 'Google Calendar', description: 'Read & write calendar events', icon: '📅', connected: true, color: '#4285F4' },
+  { id: 'gcal', name: 'Google Calendar', description: 'Read & write calendar events', icon: '📅', connected: true, color: '#ffffff' },
   { id: 'mmt', name: 'MakeMyTrip', description: 'Flight search & booking', icon: '✈️', connected: true, color: '#E8203D' },
   { id: 'uber', name: 'Uber for Business', description: 'Cab booking & tracking', icon: '⚫', connected: true, color: '#000000' },
   { id: 'ola', name: 'Ola Corporate', description: 'Cab booking alternative', icon: '🟢', connected: false, color: '#3CB371' },
-  { id: 'gmail', name: 'Gmail', description: 'Booking confirmations & e-tickets', icon: '📧', connected: true, color: '#EA4335' },
+  { id: 'gmail', name: 'Gmail', description: 'Booking confirmations & e-tickets', icon: '📧', connected: true, color: '#ffffff' },
   { id: 'concur', name: 'Concur Expense', description: 'Expense pre-approval & reports', icon: '💳', connected: false, color: '#009CDE' },
 ];
 
 const PREFERENCE_OPTIONS: Record<string, string[]> = {
-  'Preferred seat': ['Window', 'Aisle', 'Middle', 'No preference'],
-  'Cab preference': ['Sedan', 'SUV', 'Mini', 'Hatchback', 'No preference'],
-  'Meal preference': ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Jain', 'No preference'],
+  // Flight
+  'Flight class':      ['Economy', 'Business', 'First Class'],
+  'Flight type':       ['Cheapest', 'Fastest', 'Best Value', 'No Preference'],
+  'Seat preference':   ['Window', 'Aisle', 'Middle', 'No preference'],
+  'Preferred airline': ['IndiGo', 'Air India', 'Vistara', 'SpiceJet', 'Akasa Air', 'No Preference'],
+  // Cab
+  'Cab type':          ['Sedan', 'SUV', 'Mini', 'Hatchback', 'No preference'],
+  // Hotel
+  'Room type':         ['Standard', 'Deluxe', 'Suite', 'Day use'],
+  'Hotel stars':       ['5 Star', '4 Star', '3 Star', '2 Star', 'Any'],
+  // Traveller
+  'Meal preference':   ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Jain', 'No preference'],
+  // Policy
   'Travel policy': [
     'Economy — ₹10,000/trip',
     'Standard — ₹15,000/trip',
@@ -36,10 +57,15 @@ const PREFERENCE_OPTIONS: Record<string, string[]> = {
 };
 
 const PREFERENCE_ICONS: Record<string, string> = {
-  'Preferred seat':  '💺',
-  'Cab preference':  '🚕',
-  'Meal preference': '🍽️',
-  'Travel policy':   '🛡️',
+  'Flight class':      '✈️',
+  'Flight type':       '✈️',
+  'Seat preference':   '💺',
+  'Preferred airline': '✈️',
+  'Cab type':          '🚕',
+  'Room type':         '🏨',
+  'Hotel stars':       '🏨',
+  'Meal preference':   '🍽️',
+  'Travel policy':     '🛡️',
 };
 
 export function SettingsScreen() {
@@ -52,25 +78,120 @@ export function SettingsScreen() {
 
   // Preference values & picker state
   const [prefValues, setPrefValues] = useState<Record<string, string>>({
-    'Preferred seat':  'Window',
-    'Cab preference':  'Sedan',
-    'Meal preference': 'Vegetarian',
-    'Travel policy':   'Standard — ₹15,000/trip',
+    'Flight class':      'Economy',
+    'Flight type':       'Cheapest',
+    'Seat preference':   'Window',
+    'Preferred airline': 'No Preference',
+    'Cab type':          'Sedan',
+    'Room type':         'Day use',
+    'Hotel stars':       'Any',
+    'Meal preference':   'Vegetarian',
+    'Travel policy':     'Standard — ₹15,000/trip',
   });
   const [activePicker, setActivePicker] = useState<string | null>(null);
+  const [directOnly,   setDirectOnly]   = useState(false);
+  const [cabinOnly,    setCabinOnly]    = useState(true);
+  const [baseLocation,      setBaseLocation]      = useState('Kochi, Kerala');
+  const [locationDraft,     setLocationDraft]     = useState('');
+  const [locationSheetOpen, setLocationSheetOpen] = useState(false);
+  const [locating,          setLocating]          = useState(false);
+  const [mapQuery,          setMapQuery]          = useState('');
 
-  const PREFERENCES = [
-    { label: 'Preferred seat', icon: Plane },
-    { label: 'Cab preference', icon: Car },
-    { label: 'Meal preference', icon: Globe },
-    { label: 'Travel policy', icon: Shield },
-  ];
+  // Debounce map query so iframe only reloads after user stops typing
+  useEffect(() => {
+    if (!locationSheetOpen) return;
+    const t = setTimeout(() => setMapQuery(locationDraft), 900);
+    return () => clearTimeout(t);
+  }, [locationDraft, locationSheetOpen]);
+
+  function getCurrentLocation() {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const data = await res.json();
+          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
+          const state = data.address?.state || '';
+          const loc = [city, state].filter(Boolean).join(', ');
+          if (loc) { setLocationDraft(loc); setMapQuery(loc); }
+        } catch { /* silently ignore */ }
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { timeout: 8000 },
+    );
+  }
 
   const toggleIntegration = (id: string) => {
     setIntegrations(prev =>
       prev.map(i => (i.id === id ? { ...i, connected: !i.connected } : i))
     );
   };
+
+  function renderPrefSection(
+    title: string,
+    pickers: { label: string; icon: React.ElementType }[],
+    toggles: { label: string; value: boolean; onToggle: () => void }[] = [],
+  ) {
+    const rows = pickers.length + toggles.length;
+    let idx = 0;
+    return (
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono, fontWeight: 600, marginBottom: '10px', paddingLeft: '4px', letterSpacing: '0.08em' }}>
+          {title}
+        </div>
+        <div style={{ background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`, borderRadius: '14px', overflow: 'hidden' }}>
+          {pickers.map(({ label, icon: Icon }) => {
+            const isLast = idx++ === rows - 1;
+            return (
+              <motion.div
+                key={label}
+                whileTap={{ backgroundColor: tm.bgElevated }}
+                onClick={() => setActivePicker(label)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', borderBottom: isLast ? 'none' : `1px solid ${tm.borderSubtle}`, cursor: 'pointer' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Icon size={15} color={tm.textSecondary} />
+                  <span style={{ fontSize: '13px', color: tm.textPrimary, fontFamily: fonts.body }}>{label}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '12px', color: tm.accentAmber, fontFamily: fonts.mono }}>{prefValues[label]}</span>
+                  <ChevronRight size={13} color={tm.textSecondary} />
+                </div>
+              </motion.div>
+            );
+          })}
+          {toggles.map(({ label, value, onToggle }) => {
+            const isLast = idx++ === rows - 1;
+            return (
+              <div
+                key={label}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', borderBottom: isLast ? 'none' : `1px solid ${tm.borderSubtle}` }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Package size={15} color={tm.textSecondary} />
+                  <span style={{ fontSize: '13px', color: tm.textPrimary, fontFamily: fonts.body }}>{label}</span>
+                </div>
+                <button
+                  onClick={onToggle}
+                  style={{ width: '44px', height: '24px', borderRadius: '12px', background: value ? tm.accentTeal : tm.bgElevated, border: `1px solid ${value ? tm.accentTeal : tm.borderSubtle}`, cursor: 'pointer', position: 'relative', padding: 0, transition: 'all 0.2s', flexShrink: 0 }}
+                >
+                  <motion.div
+                    animate={{ x: value ? 20 : 2 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '2px', left: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }}
+                  />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -200,7 +321,9 @@ export function SettingsScreen() {
                   flexShrink: 0,
                 }}
               >
-                {integration.icon}
+                {INTEGRATION_LOGOS[integration.id]
+                  ? <img src={INTEGRATION_LOGOS[integration.id]} alt={integration.name} style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+                  : integration.icon}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
@@ -244,42 +367,87 @@ export function SettingsScreen() {
           ))}
         </div>
 
-        {/* Preferences */}
+        {/* ── Flight Preferences ── */}
+        {renderPrefSection('FLIGHT PREFERENCES', [
+          { label: 'Flight class',      icon: Plane },
+          { label: 'Flight type',       icon: Plane },
+          { label: 'Seat preference',   icon: Plane },
+          { label: 'Preferred airline', icon: Plane },
+        ], [
+          { label: 'Direct flights only', value: directOnly, onToggle: () => setDirectOnly(v => !v) },
+        ])}
+
+        {/* ── Cab Preferences ── */}
+        {renderPrefSection('CAB PREFERENCES', [
+          { label: 'Cab type', icon: Car },
+        ])}
+
+        {/* ── Hotel Preferences ── */}
+        {renderPrefSection('HOTEL PREFERENCES', [
+          { label: 'Room type',   icon: Building2 },
+          { label: 'Hotel stars', icon: Building2 },
+        ])}
+
+        {/* ── Traveller Defaults ── */}
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono, fontWeight: 600, marginBottom: '10px', paddingLeft: '4px', letterSpacing: '0.08em' }}>
-            TRAVEL PREFERENCES
+            TRAVELLER DEFAULTS
           </div>
           <div style={{ background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`, borderRadius: '14px', overflow: 'hidden' }}>
-            {PREFERENCES.map(({ label, icon: Icon }, i) => (
-              <motion.div
-                key={i}
-                whileTap={{ backgroundColor: `${tm.bgElevated}` }}
-                onClick={() => setActivePicker(label)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '13px 14px',
-                  borderBottom: i < PREFERENCES.length - 1 ? `1px solid ${tm.borderSubtle}` : 'none',
-                  cursor: 'pointer',
-                }}
+            {/* Base Location row */}
+            <motion.div
+              whileTap={{ backgroundColor: tm.bgElevated }}
+              onClick={() => { setLocationDraft(baseLocation); setMapQuery(baseLocation); setLocationSheetOpen(true); }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', borderBottom: `1px solid ${tm.borderSubtle}`, cursor: 'pointer' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <MapPin size={15} color={tm.textSecondary} />
+                <span style={{ fontSize: '13px', color: tm.textPrimary, fontFamily: fonts.body }}>Base Location</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '12px', color: tm.accentAmber, fontFamily: fonts.mono }}>{baseLocation}</span>
+                <ChevronRight size={13} color={tm.textSecondary} />
+              </div>
+            </motion.div>
+            {/* Meal preference row */}
+            <motion.div
+              whileTap={{ backgroundColor: tm.bgElevated }}
+              onClick={() => setActivePicker('Meal preference')}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', borderBottom: `1px solid ${tm.borderSubtle}`, cursor: 'pointer' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Globe size={15} color={tm.textSecondary} />
+                <span style={{ fontSize: '13px', color: tm.textPrimary, fontFamily: fonts.body }}>Meal preference</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '12px', color: tm.accentAmber, fontFamily: fonts.mono }}>{prefValues['Meal preference']}</span>
+                <ChevronRight size={13} color={tm.textSecondary} />
+              </div>
+            </motion.div>
+            {/* Cabin baggage toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Package size={15} color={tm.textSecondary} />
+                <span style={{ fontSize: '13px', color: tm.textPrimary, fontFamily: fonts.body }}>Cabin baggage only</span>
+              </div>
+              <button
+                onClick={() => setCabinOnly(v => !v)}
+                style={{ width: '44px', height: '24px', borderRadius: '12px', background: cabinOnly ? tm.accentTeal : tm.bgElevated, border: `1px solid ${cabinOnly ? tm.accentTeal : tm.borderSubtle}`, cursor: 'pointer', position: 'relative', padding: 0, transition: 'all 0.2s', flexShrink: 0 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Icon size={15} color={tm.textSecondary} />
-                  <span style={{ fontSize: '13px', color: tm.textPrimary, fontFamily: fonts.body }}>
-                    {label}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', color: tm.accentAmber, fontFamily: fonts.mono }}>
-                    {prefValues[label]}
-                  </span>
-                  <ChevronRight size={13} color={tm.textSecondary} />
-                </div>
-              </motion.div>
-            ))}
+                <motion.div
+                  animate={{ x: cabinOnly ? 20 : 2 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '2px', left: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }}
+                />
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* ── Travel Policy ── */}
+        {renderPrefSection('TRAVEL POLICY', [
+          { label: 'Travel policy', icon: Shield },
+        ])}
 
         {/* Appearance */}
         <div style={{ marginBottom: '20px' }}>
@@ -442,6 +610,120 @@ export function SettingsScreen() {
           </div>
         </div>
       </div>
+
+      {/* ── Base Location bottom sheet ── */}
+      <AnimatePresence>
+        {locationSheetOpen && (
+          <>
+            <motion.div
+              key="loc-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setLocationSheetOpen(false)}
+              style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}
+            />
+            <motion.div
+              key="loc-sheet"
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 51, background: tm.bgSurface, borderRadius: '20px 20px 0 0', border: `1px solid ${tm.borderSubtle}`, borderBottom: 'none' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '10px', paddingBottom: '4px' }}>
+                <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: tm.borderSubtle }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px 14px', borderBottom: `1px solid ${tm.borderSubtle}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '20px' }}>📍</span>
+                  <div>
+                    <div style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary }}>Base Location</div>
+                    <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>Your home city for trip planning</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setLocationSheetOpen(false)}
+                  style={{ width: '28px', height: '28px', borderRadius: '50%', background: tm.bgElevated, border: `1px solid ${tm.borderSubtle}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <X size={13} color={tm.textSecondary} />
+                </button>
+              </div>
+              <div style={{ padding: '18px 18px 32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: tm.bgElevated, border: `1px solid ${tm.borderSubtle}`, borderRadius: '12px', padding: '0 14px', height: '48px' }}>
+                  <MapPin size={15} color={tm.textSecondary} />
+                  <input
+                    autoFocus
+                    value={locationDraft}
+                    onChange={e => setLocationDraft(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && locationDraft.trim()) { setBaseLocation(locationDraft.trim()); setLocationSheetOpen(false); } }}
+                    placeholder="e.g. Mumbai, Delhi, Bengaluru"
+                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', fontFamily: fonts.body, color: tm.textPrimary }}
+                  />
+                  {locationDraft && (
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => setLocationDraft('')}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}>
+                      <X size={13} color={tm.textSecondary} />
+                    </motion.button>
+                  )}
+                </div>
+                {/* Map preview */}
+                <AnimatePresence>
+                  {mapQuery.trim() && (
+                    <motion.div
+                      key="map"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 140 }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                      style={{ borderRadius: '12px', overflow: 'hidden', border: `1px solid ${tm.borderSubtle}`, flexShrink: 0, position: 'relative' }}
+                    >
+                      <iframe
+                        key={mapQuery}
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed&z=11`}
+                        style={{ width: '100%', height: '140px', border: 'none', display: 'block' }}
+                        title="Location map"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                      {/* Location label pill */}
+                      <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', borderRadius: '20px', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <MapPin size={10} color="#fff" />
+                        <span style={{ fontSize: '11px', color: '#fff', fontFamily: fonts.mono, fontWeight: 600 }}>{mapQuery}</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Get Current Location button */}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={getCurrentLocation}
+                  disabled={locating}
+                  style={{ width: '100%', padding: '13px', borderRadius: '12px', border: `1px solid ${tm.borderSubtle}`, cursor: locating ? 'default' : 'pointer', background: tm.bgElevated, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: locating ? 0.7 : 1 }}
+                >
+                  {locating ? (
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                      style={{ width: '14px', height: '14px', borderRadius: '50%', border: `2px solid ${tm.borderSubtle}`, borderTopColor: tm.accentTeal }} />
+                  ) : (
+                    <Navigation size={14} color={tm.accentTeal} />
+                  )}
+                  <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 600, color: tm.accentTeal }}>
+                    {locating ? 'Detecting…' : 'Get Current Location'}
+                  </span>
+                </motion.button>
+
+                {/* Save Location button */}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { if (locationDraft.trim()) { setBaseLocation(locationDraft.trim()); setLocationSheetOpen(false); } }}
+                  disabled={!locationDraft.trim()}
+                  style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', cursor: locationDraft.trim() ? 'pointer' : 'not-allowed', background: locationDraft.trim() ? tm.accentAmber : tm.bgElevated, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  <Check size={14} color={locationDraft.trim() ? '#fff' : tm.textSecondary} strokeWidth={3} />
+                  <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 700, color: locationDraft.trim() ? '#fff' : tm.textSecondary }}>Save Location</span>
+                </motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── Preference picker bottom sheet ── */}
       <AnimatePresence>

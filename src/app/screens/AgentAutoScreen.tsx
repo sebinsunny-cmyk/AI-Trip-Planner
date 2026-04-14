@@ -10,6 +10,8 @@ import { CabBooking } from '../components/CabBookingCard';
 import { HotelOption } from '../components/HotelOptionCard';
 import { TripInputBar } from '../components/TripInputBar';
 import { ReminderToastContainer, useReminderToasts } from '../components/ReminderToast';
+const hotelExterior = '/hotels/hotel-exterior.jpg';
+const hotelMeeting = '/hotels/hotels-meeting.jpg';
 
 // ─── Shared data (same as AgentLiveScreen) ───────────────────────────────────
 
@@ -70,14 +72,17 @@ export const AUTO_HOTELS: HotelOption[] = [
     pricePerNight: 2500, rating: '4.6', ratingCount: '2.1k',
     amenities: ['Wifi', 'Breakfast', 'Parking'], recommended: true,
     reasoning: 'Closest 5-star to your BKC meeting venue. Check-in after your meeting.',
+    image: hotelExterior,
   },
   {
     id: 'h2', name: 'The Oberoi Mumbai', stars: 5, distanceFromVenue: '3.2 km',
     pricePerNight: 8500, rating: '4.8', ratingCount: '1.4k', amenities: ['Wifi', 'Breakfast'],
+    image: hotelMeeting,
   },
   {
     id: 'h3', name: 'ibis Mumbai BKC', stars: 3, distanceFromVenue: '0.8 km',
     pricePerNight: 3800, rating: '4.2', ratingCount: '3.8k', amenities: ['Wifi', 'Parking'],
+    image: hotelMeeting,
   },
 ];
 
@@ -85,6 +90,7 @@ export const AUTO_HOTELS: HotelOption[] = [
 
 interface StepDef {
   step: number;
+  header: string;
   integration: string;
   integrationIcon: NarrationBubble['integrationIcon'];
   text: string;
@@ -95,6 +101,7 @@ interface StepDef {
 const STEP_DEFS: StepDef[] = [
   {
     step: 1,
+    header: 'Step 1: Searching for flights',
     integration: 'MakeMyTrip',
     integrationIcon: 'flight',
     text: "Scanning morning flights from Kochi to Mumbai on Apr 15. Found 3 options — selecting the best fit: IndiGo 6E-342 departs 6:20 AM, arrives 8:10 AM, non-stop, ₹4,850. Outbound locked in. Now checking return flights — IndiGo 6E-351 at 7:15 PM is ideal. Both flights selected ✓",
@@ -103,6 +110,7 @@ const STEP_DEFS: StepDef[] = [
   },
   {
     step: 2,
+    header: 'Step 2: Searching for cabs',
     integration: 'Uber / Ola',
     integrationIcon: 'cab',
     text: "Arranging ground transport. Arrival cab: Uber Sedan from BOM T2 at 8:30 AM to BKC (₹650, ~50 min). Departure cab: Ola Sedan from BKC at 5:00 PM to BOM T2 (₹640, ~50 min). Both cabs lined up ✓",
@@ -111,6 +119,7 @@ const STEP_DEFS: StepDef[] = [
   },
   {
     step: 3,
+    header: 'Step 3: Searching for hotels',
     integration: 'Hotels.com',
     integrationIcon: 'hotel',
     text: "Checking hotels near BKC for day use. Hyatt Regency BKC is the top pick — 0.4 km from your meeting venue, 5-star rated 4.6, day use ₹2,500. Selected ✓",
@@ -119,6 +128,7 @@ const STEP_DEFS: StepDef[] = [
   },
   {
     step: 4,
+    header: 'Step 4: Preparing trip summary',
     integration: 'TripMind',
     integrationIcon: 'flight',
     text: "All three services selected. Preparing your complete trip summary — flights, cabs, and hotel together on one screen. Review everything before I confirm the bookings.",
@@ -166,6 +176,7 @@ export function AgentAutoScreen() {
     const bubble: NarrationBubble = {
       id: `bubble-${stepNum}`,
       step: stepNum,
+      header: def.header,
       text: def.text,
       status: 'typing',
       timestamp: getTimestamp(),
@@ -228,11 +239,11 @@ export function AgentAutoScreen() {
       <motion.div
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         style={{
-          background: `${tm.accentAmber}10`, border: `1px solid ${tm.accentAmber}25`,
+          background: '#3B82F608', border: '1px solid #3B82F625',
           borderRadius: '12px', padding: '12px 14px',
         }}
       >
-        <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: tm.accentAmber, marginBottom: '8px' }}>
+        <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: '#3B82F6', marginBottom: '8px' }}>
           ✈️ Flights — Auto-Selected
         </div>
         {[{ label: 'Outbound', val: 'IndiGo 6E-342 · 6:20 AM → 8:10 AM · ₹4,850' },
