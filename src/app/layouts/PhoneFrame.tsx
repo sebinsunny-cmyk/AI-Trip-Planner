@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Signal, Wifi, Battery } from 'lucide-react';
 
 const HIDE_BOTTOM_NAV = ['/new-trip', '/trip-params', '/agent-auto', '/unified-review', '/agent', '/confirmed', '/notifications', '/profile', '/signin'];
-const HIDE_BOTTOM_NAV_PREFIXES = ['/onboarding'];
+const HIDE_BOTTOM_NAV_PREFIXES = ['/onboarding', '/settings/integrations'];
 
 export function PhoneFrame() {
   const location = useLocation();

@@ -81,7 +81,7 @@ export function SignInScreen() {
             marginBottom: '20px',
           }}
         >
-          🤖
+          🧭
         </motion.div>
 
         <motion.h1
