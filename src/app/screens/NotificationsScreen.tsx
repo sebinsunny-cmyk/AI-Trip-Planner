@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, CheckCheck, Trash2 } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
-import { useTheme } from '../context/ThemeContext';
 
 type NType = 'trip' | 'reminder' | 'alert' | 'system';
 
@@ -37,7 +36,7 @@ const INITIAL: Notif[] = [
   },
   {
     id: 'n3', type: 'alert', read: false,
-    emoji: '🤖', color: '#A78BFA', bgColor: '#A78BFA15',
+    emoji: '🤖', color: '#F5A623', bgColor: '#F5A62315',
     title: 'Agent found a cheaper option',
     desc: 'Air India AI‑501 at ₹10,200 — save ₹2,600 vs current booking.',
     time: '1h ago', group: 'Today',
@@ -105,7 +104,6 @@ const GROUPS: Notif['group'][] = ['Today', 'Yesterday', 'Earlier'];
 
 export function NotificationsScreen() {
   const navigate = useNavigate();
-  const { isDark } = useTheme();
   const [notifs, setNotifs] = useState<Notif[]>(INITIAL);
   const [activeTab, setActiveTab] = useState<NType | 'all'>('all');
 
@@ -310,21 +308,20 @@ export function NotificationsScreen() {
                           }} />
                         )}
 
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '13px 12px 13px 14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 12px 12px 13px' }}>
                           {/* Icon */}
                           <div style={{
-                            width: '40px', height: '40px', borderRadius: '12px',
-                            background: isDark ? n.bgColor : n.bgColor.replace('15', '25'),
-                            border: `1px solid ${n.color}30`,
+                            width: '34px', height: '34px', borderRadius: '10px',
+                            background: n.bgColor,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '18px', flexShrink: 0,
+                            fontSize: '16px', flexShrink: 0,
                           }}>
                             {n.emoji}
                           </div>
 
                           {/* Content */}
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px', marginBottom: '3px' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px', marginBottom: '2px' }}>
                               <span style={{
                                 fontSize: '13px', fontFamily: fonts.heading,
                                 fontWeight: n.read ? 600 : 800,
@@ -333,44 +330,20 @@ export function NotificationsScreen() {
                               }}>
                                 {n.title}
                               </span>
-                              {/* Dismiss */}
                               <button
                                 onClick={e => { e.stopPropagation(); dismiss(n.id); }}
-                                style={{
-                                  background: 'none', border: 'none', cursor: 'pointer',
-                                  padding: '2px', flexShrink: 0,
-                                  opacity: 0.5,
-                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', flexShrink: 0, opacity: 0.4 }}
                               >
-                                <Trash2 size={13} color={tm.textSecondary} />
+                                <Trash2 size={12} color={tm.textSecondary} />
                               </button>
                             </div>
-                            <p style={{
-                              fontSize: '11px', color: tm.textSecondary,
-                              fontFamily: fonts.mono, margin: 0, lineHeight: 1.5,
-                            }}>
+                            <p style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono, margin: '0 0 5px', lineHeight: 1.45 }}>
                               {n.desc}
                             </p>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '7px' }}>
-                              {/* Category chip */}
-                              <span style={{
-                                fontSize: '9px', fontFamily: fonts.mono,
-                                color: n.color,
-                                background: `${n.color}18`,
-                                border: `1px solid ${n.color}30`,
-                                borderRadius: '6px', padding: '2px 6px',
-                                textTransform: 'uppercase', letterSpacing: '0.06em',
-                              }}>
-                                {n.type}
-                              </span>
-                              <span style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>
-                                {n.time}
-                              </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>{n.time}</span>
                               {!n.read && (
-                                <div style={{
-                                  width: '6px', height: '6px', borderRadius: '50%',
-                                  background: n.color, marginLeft: 'auto',
-                                }} />
+                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: n.color, marginLeft: 'auto' }} />
                               )}
                             </div>
                           </div>

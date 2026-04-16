@@ -24,6 +24,8 @@ import { OnboardingPrefsFlightScreen } from './screens/OnboardingPrefsFlightScre
 import { OnboardingPrefsHotelScreen } from './screens/OnboardingPrefsHotelScreen';
 import { OnboardingPermissionsScreen } from './screens/OnboardingPermissionsScreen';
 import { OnboardingAllSetScreen } from './screens/OnboardingAllSetScreen';
+import { IntegrationDetailScreen } from './screens/IntegrationDetailScreen';
+import { IntegrationConnectScreen } from './screens/IntegrationConnectScreen';
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +50,8 @@ export const router = createBrowserRouter([
           { path: 'trips', Component: MyTripsScreen },
           { path: 'trips/:id', Component: TripDetailScreen },
           { path: 'settings', Component: SettingsScreen },
+          { path: 'settings/integrations/:serviceId', Component: IntegrationDetailScreen },
+          { path: 'settings/integrations/:serviceId/connect', Component: IntegrationConnectScreen },
           { path: 'notifications', Component: NotificationsScreen },
           { path: 'profile', Component: ProfileScreen },
 

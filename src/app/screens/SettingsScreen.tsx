@@ -3,36 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, Globe, Car, Plane, Shield, Sun, Moon, Check, X, Building2, Package, MapPin, Navigation } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
-import uberLogo from '../../assets/logos/uber-logo.webp';
-import olaLogo from '../../assets/logos/white_ola_logo.png';
-import makemtLogo from '../../assets/logos/makemt.png';
 import { useNavigate } from 'react-router';
+import { INTEGRATION_SERVICES, isIntegrationConnected } from '../data/integrations';
 
-interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  connected: boolean;
-  color: string;
-}
-
-const INTEGRATION_LOGOS: Record<string, string> = {
-  gcal:  'https://ssl.gstatic.com/calendar/images/dynamiclogo_2020q4/calendar_2_2x.png',
-  gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
-  uber:  uberLogo,
-  ola:   olaLogo,
-  mmt:   makemtLogo,
-};
-
-const INTEGRATIONS: Integration[] = [
-  { id: 'gcal', name: 'Google Calendar', description: 'Read & write calendar events', icon: '📅', connected: true, color: '#ffffff' },
-  { id: 'mmt', name: 'MakeMyTrip', description: 'Flight search & booking', icon: '✈️', connected: true, color: '#E8203D' },
-  { id: 'uber', name: 'Uber for Business', description: 'Cab booking & tracking', icon: '⚫', connected: true, color: '#000000' },
-  { id: 'ola', name: 'Ola Corporate', description: 'Cab booking alternative', icon: '🟢', connected: false, color: '#3CB371' },
-  { id: 'gmail', name: 'Gmail', description: 'Booking confirmations & e-tickets', icon: '📧', connected: true, color: '#ffffff' },
-  { id: 'concur', name: 'Concur Expense', description: 'Expense pre-approval & reports', icon: '💳', connected: false, color: '#009CDE' },
-];
 
 const PREFERENCE_OPTIONS: Record<string, string[]> = {
   // Flight
@@ -69,7 +42,7 @@ const PREFERENCE_ICONS: Record<string, string> = {
 };
 
 export function SettingsScreen() {
-  const [integrations, setIntegrations] = useState(INTEGRATIONS);
+  const [, forceUpdate] = useState(0);
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [autoBook, setAutoBook] = useState(false);
   const [autoBookFlight, setAutoBookFlight] = useState(false);
@@ -125,11 +98,6 @@ export function SettingsScreen() {
     );
   }
 
-  const toggleIntegration = (id: string) => {
-    setIntegrations(prev =>
-      prev.map(i => (i.id === id ? { ...i, connected: !i.connected } : i))
-    );
-  };
 
   function renderPrefSection(
     title: string,
@@ -291,80 +259,69 @@ export function SettingsScreen() {
           <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono, fontWeight: 600, marginBottom: '10px', paddingLeft: '4px', letterSpacing: '0.08em' }}>
             INTEGRATIONS
           </div>
-          {integrations.map((integration, i) => (
-            <motion.div
-              key={integration.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06 }}
-              style={{
-                background: tm.bgSurface,
-                border: `1px solid ${tm.borderSubtle}`,
-                borderRadius: '14px',
-                padding: '12px 14px',
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-              }}
-            >
-              <div
+          {INTEGRATION_SERVICES.map((svc, i) => {
+            const connected = isIntegrationConnected(svc.id);
+            const isGoogle = svc.oauthStyle === 'google';
+            return (
+              <motion.div
+                key={svc.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }}
+                onClick={() => navigate(`/settings/integrations/${svc.id}`)}
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: integration.color,
+                  background: tm.bgSurface,
+                  border: `1px solid ${tm.borderSubtle}`,
+                  borderRadius: '14px',
+                  padding: '12px 14px',
+                  marginBottom: '8px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
-                  flexShrink: 0,
-                }}
-              >
-                {INTEGRATION_LOGOS[integration.id]
-                  ? <img src={INTEGRATION_LOGOS[integration.id]} alt={integration.name} style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
-                  : integration.icon}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
-                  {integration.name}
-                </div>
-                <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono }}>
-                  {integration.description}
-                </div>
-              </div>
-              <button
-                onClick={() => toggleIntegration(integration.id)}
-                style={{
-                  width: '44px',
-                  height: '24px',
-                  borderRadius: '12px',
-                  background: integration.connected ? tm.accentTeal : tm.bgElevated,
-                  border: `1px solid ${integration.connected ? tm.accentTeal : tm.borderSubtle}`,
+                  gap: '12px',
                   cursor: 'pointer',
-                  position: 'relative',
-                  padding: 0,
-                  transition: 'all 0.2s',
-                  flexShrink: 0,
                 }}
               >
-                <motion.div
-                  animate={{ x: integration.connected ? 20 : 2 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    background: '#fff',
-                    position: 'absolute',
-                    top: '2px',
-                    left: '0',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-                  }}
-                />
-              </button>
-            </motion.div>
-          ))}
+                {/* Icon */}
+                <div style={{
+                  width: 36, height: 36, borderRadius: '10px', flexShrink: 0,
+                  background: svc.brand.iconBg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: `1px solid ${tm.borderSubtle}`,
+                  overflow: 'hidden',
+                }}>
+                  {svc.logoUrl
+                    ? <img src={svc.logoUrl} alt={svc.name} style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                    : svc.logo
+                      ? <img src={svc.logo} alt={svc.name} style={{ width: 24, height: 24, objectFit: 'contain', filter: svc.logoFilter ?? 'none' }} />
+                      : svc.logoWordmark
+                        ? <span style={{ fontSize: svc.logoWordmark.fontSize, fontWeight: svc.logoWordmark.fontWeight, color: svc.logoWordmark.color, letterSpacing: svc.logoWordmark.letterSpacing, fontFamily: 'sans-serif', lineHeight: 1 }}>{svc.logoWordmark.text}</span>
+                        : null}
+                </div>
+                {/* Text */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
+                    {svc.name}
+                  </div>
+                  <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px' }}>
+                    {svc.description}
+                  </div>
+                </div>
+                {/* Status pill */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  background: connected ? `${tm.accentTeal}15` : tm.bgElevated,
+                  border: `1px solid ${connected ? `${tm.accentTeal}40` : tm.borderSubtle}`,
+                  borderRadius: '20px', padding: '3px 8px', flexShrink: 0,
+                }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: connected ? tm.accentTeal : tm.textSecondary }} />
+                  <span style={{ fontSize: '10px', fontFamily: fonts.mono, fontWeight: 600, color: connected ? tm.accentTeal : tm.textSecondary }}>
+                    {connected ? 'Connected' : 'Not connected'}
+                  </span>
+                </div>
+                <ChevronRight size={14} color={tm.textSecondary} style={{ flexShrink: 0 }} />
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* ── Flight Preferences ── */}

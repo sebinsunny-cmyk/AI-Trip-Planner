@@ -77,7 +77,7 @@ export function HomeScreen() {
               fontSize: '14px',
             }}
           >
-            🤖
+            🧭
           </div>
           <span
             style={{
