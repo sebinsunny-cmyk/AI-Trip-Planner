@@ -118,8 +118,8 @@ export function OnboardingPrefsFlightScreen() {
   const navigate = useNavigate();
   const [flightClass, setFlightClass] = useState('Economy');
   const [seatPref,    setSeatPref]    = useState('Window');
-  const [cabinOnly,   setCabinOnly]   = useState(false);
-  const [directOnly,  setDirectOnly]  = useState(false);
+  const [cabinOnly,   setCabinOnly]   = useState(true);
+  const [directOnly,  setDirectOnly]  = useState(true);
 
   function proceed() { navigate('/onboarding/prefs-hotel'); }
 

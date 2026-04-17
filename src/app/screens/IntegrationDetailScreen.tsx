@@ -163,38 +163,6 @@ export function IntegrationDetailScreen() {
         </motion.div>
       )}
 
-      {/* ── Capabilities ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        style={{ margin: '16px 20px 0' }}
-      >
-        <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, fontWeight: 600, marginBottom: '10px', letterSpacing: '0.08em' }}>
-          WHAT TRIPMIND CAN DO
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {service.capabilities.map((cap, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.12 + i * 0.07 }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '12px',
-                background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
-                borderRadius: '12px', padding: '11px 14px',
-              }}
-            >
-              <span style={{ fontSize: '18px', flexShrink: 0 }}>{cap.icon}</span>
-              <span style={{ fontSize: '12px', color: tm.textPrimary, fontFamily: fonts.body, lineHeight: 1.45 }}>
-                {cap.text}
-              </span>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
       {/* ── Permissions ── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
