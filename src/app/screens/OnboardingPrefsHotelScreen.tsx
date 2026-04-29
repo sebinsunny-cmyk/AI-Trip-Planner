@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Building2, Hotel, Crown } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { NovaBubble, StepDots } from '../components/NovaBubble';
 
 /* ─── Data ────────────────────────────────────────────────────────────────── */
 
-const HOTEL_TIERS = [
-  { id: '3 Star', emoji: '🏨', label: 'Budget',   sub: '3★  Comfortable' },
-  { id: '4 Star', emoji: '🏩', label: 'Comfort',  sub: '4★  Popular pick' },
-  { id: '5 Star', emoji: '🏰', label: 'Premium',  sub: '5★  Full service' },
+const HOTEL_TIERS: { id: string; Icon: React.ElementType; label: string; sub: string }[] = [
+  { id: '3 Star', Icon: Building2, label: 'Budget',  sub: '3 Star' },
+  { id: '4 Star', Icon: Hotel,     label: 'Comfort', sub: '4 Star' },
+  { id: '5 Star', Icon: Crown,     label: 'Premium', sub: '5 Star' },
 ];
 
 const CAB_TYPES = ['Sedan', 'SUV', 'Mini', 'No preference'];
@@ -19,6 +19,7 @@ const MEAL_PREFS = ['Vegetarian', 'Non-Veg', 'Vegan', 'Jain', 'Any'];
 /* ─── Sub-components ──────────────────────────────────────────────────────── */
 
 function HotelGrid({ selected, onChange }: { selected: string; onChange: (v: string) => void }) {
+  const accent = tm.accentAmber;
   return (
     <div style={{ marginBottom: '22px' }}>
       <div style={{
@@ -28,7 +29,7 @@ function HotelGrid({ selected, onChange }: { selected: string; onChange: (v: str
         HOTEL TIER
       </div>
       <div style={{ display: 'flex', gap: '8px' }}>
-        {HOTEL_TIERS.map(({ id, emoji, label, sub }, i) => {
+        {HOTEL_TIERS.map(({ id, Icon, label, sub }, i) => {
           const active = selected === id;
           return (
             <motion.button
@@ -40,24 +41,34 @@ function HotelGrid({ selected, onChange }: { selected: string; onChange: (v: str
               onClick={() => onChange(id)}
               style={{
                 flex: 1, padding: '14px 6px', borderRadius: '14px',
-                background: active ? `${tm.accentAmber}14` : tm.bgSurface,
-                border: `1.5px solid ${active ? tm.accentAmber : tm.borderSubtle}`,
+                background: active ? `${accent}14` : tm.bgSurface,
+                border: `1.5px solid ${active ? accent : tm.borderSubtle}`,
                 cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
                 transition: 'all 0.18s',
               }}
             >
-              <span style={{ fontSize: '24px', lineHeight: 1 }}>{emoji}</span>
-              <div>
-                <div style={{
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '13px',
+                background: active ? `${accent}18` : tm.bgElevated,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.18s',
+              }}>
+                <Icon size={22} color={active ? accent : tm.textSecondary} strokeWidth={1.75} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                <span style={{
                   fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700,
-                  color: active ? tm.accentAmber : tm.textPrimary,
+                  color: active ? accent : tm.textPrimary,
                 }}>
                   {label}
-                </div>
-                <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px' }}>
+                </span>
+                <span style={{
+                  fontSize: '10px', fontFamily: fonts.mono,
+                  color: active ? `${accent}90` : tm.textSecondary,
+                }}>
                   {sub}
-                </div>
+                </span>
               </div>
             </motion.button>
           );
@@ -88,6 +99,7 @@ function ChipRow({ label, options, selected, onChange, accent = tm.accentAmber }
               whileTap={{ scale: 0.94 }}
               onClick={() => onChange(opt)}
               style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: '8px 16px', borderRadius: '22px',
                 border: `1px solid ${active ? accent : tm.borderSubtle}`,
                 background: active ? `${accent}15` : tm.bgSurface,

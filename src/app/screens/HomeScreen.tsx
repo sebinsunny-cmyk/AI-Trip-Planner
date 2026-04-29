@@ -158,9 +158,9 @@ export function HomeScreen() {
             <motion.div
               animate={{ rotate: [0, 5, -5, 0] }}
               transition={{ repeat: Infinity, duration: 4 }}
-              style={{ fontSize: '20px' }}
+              style={{ display: 'flex', alignItems: 'center' }}
             >
-              ✈️
+              <Plane size={20} color={tm.accentAmber} />
             </motion.div>
             <span
               style={{

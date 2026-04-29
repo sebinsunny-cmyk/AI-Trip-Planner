@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
+import { Bell, Car, Plane, PlaneLanding, MapPin, Building2, Briefcase } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 
 interface TimelineItem {
   time: string;
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   subtitle?: string;
   reasoning?: string;
@@ -12,21 +13,21 @@ interface TimelineItem {
 }
 
 const ITEMS: TimelineItem[] = [
-  { time: '04:45 AM', icon: '🔔', title: 'Wake-up Reminder', subtitle: 'Auto-set by TripMind', type: 'reminder', reasoning: 'You need 35 min to get ready and 5 min buffer before cab.' },
-  { time: '05:20 AM', icon: '🚕', title: 'Cab to COK Airport', subtitle: '~30 min drive', type: 'cab', reasoning: 'Booking the cab 35 min before check-in opens gives comfortable buffer.' },
-  { time: '06:00 AM', icon: '✈️', title: 'Arrive COK — Check-in opens', subtitle: 'IndiGo 6E-342', type: 'flight' },
-  { time: '06:20 AM', icon: '✈️', title: 'Flight 6E-342 departs', subtitle: 'COK → BOM', type: 'flight', reasoning: 'Non-stop morning flight, lands 8:10 AM — 6 hrs before your meeting.' },
-  { time: '08:10 AM', icon: '🛬', title: 'Land BOM T2', subtitle: 'Terminal 2', type: 'flight' },
-  { time: '08:30 AM', icon: '🚕', title: 'Cab pickup — BOM T2 Arrivals', subtitle: 'Uber Sedan · ₹650', type: 'cab', reasoning: '20 min buffer for deplaning + baggage claim (traveling light).' },
-  { time: '09:30 AM', icon: '📍', title: 'Arrive at venue (BKC)', subtitle: '4.5 hrs before meeting ✅', type: 'buffer', reasoning: 'Plenty of time to grab breakfast, freshen up, review materials.' },
-  { time: '09:45 AM', icon: '🏨', title: 'Hotel Check-in', subtitle: 'Hyatt Regency BKC · Conf: HY-BKC-8821', type: 'hotel', reasoning: 'Day-use room booked to freshen up before the meeting. 0.4 km from your venue.' },
-  { time: '02:00 PM', icon: '💼', title: 'Meeting begins', subtitle: 'BKC Office', type: 'meeting' },
-  { time: '04:00 PM', icon: '💼', title: 'Meeting ends', subtitle: 'BKC Office', type: 'meeting' },
-  { time: '04:30 PM', icon: '🏨', title: 'Hotel Check-out', subtitle: 'Hyatt Regency BKC', type: 'hotel' },
-  { time: '05:00 PM', icon: '🚕', title: 'Cab to BOM T2', subtitle: 'Ola Sedan · ₹640', type: 'cab', reasoning: 'BKC to BOM is 45 min in evening traffic. 5 PM gives 2h 15m buffer for your 7:15 PM flight.' },
-  { time: '05:45 PM', icon: '✈️', title: 'Arrive BOM — Security/Check-in', subtitle: 'Terminal 2', type: 'flight' },
-  { time: '07:15 PM', icon: '✈️', title: 'Return flight departs', subtitle: 'BOM → COK', type: 'flight' },
-  { time: '09:00 PM', icon: '🛬', title: 'Land COK', subtitle: 'Home ✈', type: 'flight' },
+  { time: '04:45 AM', icon: <Bell size={9} />,         title: 'Wake-up Reminder', subtitle: 'Auto-set by TripMind', type: 'reminder', reasoning: 'You need 35 min to get ready and 5 min buffer before cab.' },
+  { time: '05:20 AM', icon: <Car size={9} />,          title: 'Cab to COK Airport', subtitle: '~30 min drive', type: 'cab', reasoning: 'Booking the cab 35 min before check-in opens gives comfortable buffer.' },
+  { time: '06:00 AM', icon: <Plane size={9} />,        title: 'Arrive COK — Check-in opens', subtitle: 'IndiGo 6E-342', type: 'flight' },
+  { time: '06:20 AM', icon: <Plane size={9} />,        title: 'Flight 6E-342 departs', subtitle: 'COK → BOM', type: 'flight', reasoning: 'Non-stop morning flight, lands 8:10 AM — 6 hrs before your meeting.' },
+  { time: '08:10 AM', icon: <PlaneLanding size={9} />, title: 'Land BOM T2', subtitle: 'Terminal 2', type: 'flight' },
+  { time: '08:30 AM', icon: <Car size={9} />,          title: 'Cab pickup — BOM T2 Arrivals', subtitle: 'Uber Sedan · ₹650', type: 'cab', reasoning: '20 min buffer for deplaning + baggage claim (traveling light).' },
+  { time: '09:30 AM', icon: <MapPin size={9} />,       title: 'Arrive at venue (BKC)', subtitle: '4.5 hrs before meeting ✅', type: 'buffer', reasoning: 'Plenty of time to grab breakfast, freshen up, review materials.' },
+  { time: '09:45 AM', icon: <Building2 size={9} />,    title: 'Hotel Check-in', subtitle: 'Hyatt Regency BKC · Conf: HY-BKC-8821', type: 'hotel', reasoning: 'Day-use room booked to freshen up before the meeting. 0.4 km from your venue.' },
+  { time: '02:00 PM', icon: <Briefcase size={9} />,    title: 'Meeting begins', subtitle: 'BKC Office', type: 'meeting' },
+  { time: '04:00 PM', icon: <Briefcase size={9} />,    title: 'Meeting ends', subtitle: 'BKC Office', type: 'meeting' },
+  { time: '04:30 PM', icon: <Building2 size={9} />,    title: 'Hotel Check-out', subtitle: 'Hyatt Regency BKC', type: 'hotel' },
+  { time: '05:00 PM', icon: <Car size={9} />,          title: 'Cab to BOM T2', subtitle: 'Ola Sedan · ₹640', type: 'cab', reasoning: 'BKC to BOM is 45 min in evening traffic. 5 PM gives 2h 15m buffer for your 7:15 PM flight.' },
+  { time: '05:45 PM', icon: <Plane size={9} />,        title: 'Arrive BOM — Security/Check-in', subtitle: 'Terminal 2', type: 'flight' },
+  { time: '07:15 PM', icon: <Plane size={9} />,        title: 'Return flight departs', subtitle: 'BOM → COK', type: 'flight' },
+  { time: '09:00 PM', icon: <PlaneLanding size={9} />, title: 'Land COK', subtitle: 'Home', type: 'flight' },
 ];
 
 const TYPE_COLORS: Record<string, string> = {
@@ -63,7 +64,7 @@ export function ItineraryTimeline() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '9px',
+                color: TYPE_COLORS[item.type],
                 flexShrink: 0,
                 marginTop: '6px',
               }}

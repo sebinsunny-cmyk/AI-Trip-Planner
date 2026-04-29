@@ -5,7 +5,7 @@ import {
   ChevronLeft, Plane, Check, Clock, MapPin,
   Share2, Download, AlertCircle, Leaf, Copy,
   CheckCircle2, Hourglass, FileCheck, Sparkles,
-  Star, Wifi, Coffee, Car,
+  Star, Wifi, Coffee, Car, Building2, CreditCard,
 } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import type { TripDetail, FlightLeg, TripStatus, HotelEntry } from '../data/trips';
@@ -590,11 +590,11 @@ function ExpensesTab({ trip }: { trip: TripDetail }) {
   const byCategory: Record<string, number> = {};
   trip.expenses.forEach(e => { byCategory[e.category] = (byCategory[e.category] ?? 0) + e.amount; });
 
-  const catMeta: Record<string, { label: string; color: string; icon: string }> = {
-    flight: { label: 'Flights', color: tm.accentAmber, icon: '✈️' },
-    cab:    { label: 'Cabs',    color: tm.accentTeal,  icon: '🚕' },
-    hotel:  { label: 'Hotel',   color: '#7C3AED',       icon: '🏨' },
-    other:  { label: 'Other',   color: '#4A9EFF',       icon: '💳' },
+  const catMeta: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+    flight: { label: 'Flights', color: tm.accentAmber, icon: <Plane      size={14} color={tm.accentAmber} /> },
+    cab:    { label: 'Cabs',    color: tm.accentTeal,  icon: <Car        size={14} color={tm.accentTeal}  /> },
+    hotel:  { label: 'Hotel',   color: '#7C3AED',       icon: <Building2  size={14} color="#7C3AED"        /> },
+    other:  { label: 'Other',   color: '#4A9EFF',       icon: <CreditCard size={14} color="#4A9EFF"        /> },
   };
 
   const barColor = done
@@ -688,13 +688,13 @@ function ExpensesTab({ trip }: { trip: TripDetail }) {
         <div style={{ padding: '14px' }}>
           <MiniLabel>By Category</MiniLabel>
           {Object.entries(byCategory).map(([cat, amt], i, arr) => {
-            const meta = catMeta[cat] ?? { label: cat, color: tm.textSecondary, icon: '💳' };
+            const meta = catMeta[cat] ?? { label: cat, color: tm.textSecondary, icon: <CreditCard size={14} color={tm.textSecondary} /> };
             const p = Math.round((amt / total) * 100);
             return (
               <div key={cat} style={{ marginBottom: i < arr.length - 1 ? '12px' : 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                    <span style={{ fontSize: '14px' }}>{meta.icon}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>{meta.icon}</span>
                     <span style={{ fontSize: '12px', fontFamily: fonts.body,
                       color: done ? tm.textSecondary : tm.textPrimary }}>{meta.label}</span>
                   </div>
@@ -803,7 +803,7 @@ function HotelCard({ hotel, dim }: { hotel: HotelEntry; dim: boolean }) {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-              <span style={{ fontSize: '18px' }}>🏨</span>
+              <Building2 size={18} color="#7C3AED" />
               <div>
                 <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700,
                   color: dim ? tm.textSecondary : tm.textPrimary }}>
@@ -1028,7 +1028,7 @@ function DetailsTab({ trip }: { trip: TripDetail }) {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '17px' }}>🚕</span>
+                    <Car size={17} color={tm.accentTeal} />
                     <div>
                       <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700,
                         color: done ? tm.textSecondary : tm.textPrimary }}>
