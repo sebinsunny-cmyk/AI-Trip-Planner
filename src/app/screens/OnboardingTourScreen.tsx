@@ -1,27 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
+import { Luggage, Plane, TreePalm } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { NovaBubble, StepDots } from '../components/NovaBubble';
 
 const TRAVELLER_TYPES = [
   {
     id: 'frequent',
-    emoji: '🧳',
+    icon: <Luggage size={24} />,
     headline: 'Frequent business traveller',
     sub: 'Multiple trips every month',
     accent: '#F5A623',
   },
   {
     id: 'occasional',
-    emoji: '✈️',
+    icon: <Plane size={24} />,
     headline: 'Occasional work trips',
     sub: 'A few times a year',
     accent: '#3B82F6',
   },
   {
     id: 'mixed',
-    emoji: '🌴',
+    icon: <TreePalm size={24} />,
     headline: 'Mix of work & leisure',
     sub: 'It depends on the season',
     accent: '#00C9A7',
@@ -63,7 +64,7 @@ export function OnboardingTourScreen() {
         flex: 1, padding: '0 20px',
         display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px',
       }}>
-        {TRAVELLER_TYPES.map(({ id, emoji, headline, sub, accent }, i) => (
+        {TRAVELLER_TYPES.map(({ id, icon, headline, sub, accent }, i) => (
           <motion.button
             key={id}
             initial={{ opacity: 0, x: -18 }}
@@ -87,9 +88,9 @@ export function OnboardingTourScreen() {
               width: 50, height: 50, borderRadius: '14px', flexShrink: 0,
               background: `${accent}18`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '24px',
+              color: accent,
             }}>
-              {emoji}
+              {icon}
             </div>
 
             {/* Text */}

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, ChevronRight, ChevronDown, ChevronUp, X, Check, User, Lock } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ChevronDown, ChevronUp, X, Check, User, Lock, CreditCard, Landmark, Smartphone, Wallet, Clock } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 
 // ─── Razorpay brand colors (fixed, not theme-dependent) ──────────────────────
@@ -22,10 +22,10 @@ const RPZ = {
 
 type MethodId = 'cards' | 'netbanking' | 'wallet' | 'paylater' | 'upi';
 
-const METHODS: { id: MethodId; label: string; icon: string; logos: { label: string; color: string; bg: string }[] }[] = [
+const METHODS: { id: MethodId; label: string; icon: React.ReactNode; logos: { label: string; color: string; bg: string }[] }[] = [
   {
     id: 'cards', label: 'Cards',
-    icon: '💳',
+    icon: <CreditCard size={16} />,
     logos: [
       { label: 'VISA',   color: '#1A1F71', bg: '#EEF0FF' },
       { label: 'MC',     color: '#EB001B', bg: '#FFF0F0' },
@@ -34,7 +34,7 @@ const METHODS: { id: MethodId; label: string; icon: string; logos: { label: stri
   },
   {
     id: 'netbanking', label: 'Netbanking',
-    icon: '🏛️',
+    icon: <Landmark size={16} />,
     logos: [
       { label: 'BOB',    color: '#E65100', bg: '#FFF3E0' },
       { label: 'Canara', color: '#1565C0', bg: '#E3F2FD' },
@@ -43,7 +43,7 @@ const METHODS: { id: MethodId; label: string; icon: string; logos: { label: stri
   },
   {
     id: 'upi', label: 'UPI',
-    icon: '📲',
+    icon: <Smartphone size={16} />,
     logos: [
       { label: 'GPay',   color: '#34A853', bg: '#E8F5E9' },
       { label: 'PhonePe',color: '#5F259F', bg: '#F3E5F5' },
@@ -52,7 +52,7 @@ const METHODS: { id: MethodId; label: string; icon: string; logos: { label: stri
   },
   {
     id: 'wallet', label: 'Wallet',
-    icon: '👛',
+    icon: <Wallet size={16} />,
     logos: [
       { label: 'Paytm',  color: '#002970', bg: '#E3F2FD' },
       { label: 'AmazonPay', color: '#FF9900', bg: '#FFF8E1' },
@@ -61,7 +61,7 @@ const METHODS: { id: MethodId; label: string; icon: string; logos: { label: stri
   },
   {
     id: 'paylater', label: 'Pay Later',
-    icon: '🕐',
+    icon: <Clock size={16} />,
     logos: [
       { label: 'LazyPay', color: '#E53935', bg: '#FFEBEE' },
       { label: 'ICICI',   color: '#B71C1C', bg: '#FFEBEE' },
@@ -257,7 +257,8 @@ export function PaymentGatewayScreen() {
                     width: '34px', height: '34px', borderRadius: '10px',
                     background: expanded === m.id ? '#E3EAFF' : '#F5F6FA',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '16px', flexShrink: 0,
+                    color: expanded === m.id ? '#2C6EEC' : RPZ.textSub,
+                    flexShrink: 0,
                   }}>
                     {m.icon}
                   </div>

@@ -1,25 +1,25 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Armchair, Briefcase, Sparkles, AppWindow, ArrowLeftRight, Shuffle } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { NovaBubble, StepDots } from '../components/NovaBubble';
 
 /* ─── Visual card grids ───────────────────────────────────────────────────── */
 
-const FLIGHT_CLASSES = [
-  { id: 'Economy',     emoji: '🪑', label: 'Economy',     sub: 'Smart & efficient' },
-  { id: 'Business',    emoji: '💼', label: 'Business',    sub: 'Extra comfort'     },
-  { id: 'First Class', emoji: '🥂', label: 'First Class', sub: 'Top tier'          },
+const FLIGHT_CLASSES: { id: string; Icon: React.ElementType; label: string }[] = [
+  { id: 'Economy',     Icon: Armchair,  label: 'Economy'     },
+  { id: 'Business',    Icon: Briefcase, label: 'Business'    },
+  { id: 'First Class', Icon: Sparkles,  label: 'First Class' },
 ];
 
-const SEAT_PREFS = [
-  { id: 'Window',       emoji: '🪟', label: 'Window',        sub: 'Views & lean' },
-  { id: 'Aisle',        emoji: '↔️',  label: 'Aisle',         sub: 'Easy exit'    },
-  { id: 'No preference',emoji: '🎲', label: 'No preference', sub: 'Anything works'},
+const SEAT_PREFS: { id: string; Icon: React.ElementType; label: string }[] = [
+  { id: 'Window',        Icon: AppWindow,       label: 'Window' },
+  { id: 'Aisle',         Icon: ArrowLeftRight,  label: 'Aisle'  },
+  { id: 'No preference', Icon: Shuffle,         label: 'Any'    },
 ];
 
-function VisualGrid<T extends { id: string; emoji: string; label: string; sub: string }>({
+function VisualGrid<T extends { id: string; Icon: React.ElementType; label: string }>({
   label, items, selected, onChange, accent = tm.accentAmber,
 }: {
   label: string;
@@ -37,7 +37,7 @@ function VisualGrid<T extends { id: string; emoji: string; label: string; sub: s
         {label}
       </div>
       <div style={{ display: 'flex', gap: '8px' }}>
-        {items.map(({ id, emoji, label: lbl, sub }, i) => {
+        {items.map(({ id, Icon, label: lbl }, i) => {
           const active = selected === id;
           return (
             <motion.button
@@ -48,29 +48,29 @@ function VisualGrid<T extends { id: string; emoji: string; label: string; sub: s
               whileTap={{ scale: 0.95 }}
               onClick={() => onChange(id)}
               style={{
-                flex: 1, padding: '12px 6px', borderRadius: '14px',
+                flex: 1, padding: '14px 6px', borderRadius: '14px',
                 background: active ? `${accent}14` : tm.bgSurface,
                 border: `1.5px solid ${active ? accent : tm.borderSubtle}`,
                 cursor: 'pointer',
                 display: 'flex', flexDirection: 'column',
-                alignItems: 'center', gap: '6px',
+                alignItems: 'center', gap: '8px',
                 transition: 'all 0.18s',
               }}
             >
-              <span style={{ fontSize: '22px', lineHeight: 1 }}>{emoji}</span>
-              <div>
-                <div style={{
-                  fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700,
-                  color: active ? accent : tm.textPrimary, lineHeight: 1.2,
-                }}>
-                  {lbl}
-                </div>
-                <div style={{
-                  fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px',
-                }}>
-                  {sub}
-                </div>
+              <div style={{
+                width: '40px', height: '40px', borderRadius: '12px',
+                background: active ? `${accent}18` : tm.bgElevated,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.18s',
+              }}>
+                <Icon size={20} color={active ? accent : tm.textSecondary} strokeWidth={1.75} />
               </div>
+              <span style={{
+                fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700,
+                color: active ? accent : tm.textPrimary, lineHeight: 1.2,
+              }}>
+                {lbl}
+              </span>
             </motion.button>
           );
         })}
@@ -150,7 +150,7 @@ export function OnboardingPrefsFlightScreen() {
 
       {/* Nova question */}
       <div style={{ paddingTop: '22px', flexShrink: 0 }}>
-        <NovaBubble message="How do you prefer to fly? I'll use this for every search." />
+        <NovaBubble message="How do you prefer to fly? I'll use this for every booking." />
       </div>
 
       {/* Prefs content */}
