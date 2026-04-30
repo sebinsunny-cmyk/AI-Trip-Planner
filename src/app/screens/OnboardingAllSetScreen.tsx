@@ -136,9 +136,8 @@ export function OnboardingAllSetScreen() {
               transition={{ delay: 0.5 + i * 0.08 }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '12px',
-                background: tm.bgSurface,
-                border: `1px solid ${tm.borderSubtle}`,
-                borderRadius: '12px', padding: '10px 14px',
+                padding: '6px 0',
+                pointerEvents: 'none',
               }}
             >
               <div style={{ width: 32, height: 32, borderRadius: '9px', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -174,7 +173,7 @@ export function OnboardingAllSetScreen() {
           <span style={{ fontSize: '16px', fontFamily: fonts.heading, fontWeight: 800, color: '#fff', letterSpacing: '-0.2px' }}>
             Start Planning
           </span>
-          <span style={{ fontSize: '18px' }}>✈️</span>
+          <Plane size={18} color="#ffffff" />
         </motion.button>
       </motion.div>
     </div>

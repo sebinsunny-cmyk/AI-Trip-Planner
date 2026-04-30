@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Settings, Minimize2 } from 'lucide-react';
+import { ArrowLeft, Settings, Minimize2, Plane, Car, Building2, CalendarDays, CreditCard, ClipboardList, RotateCcw, Ban, Wallet } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { ProgressRail } from '../components/ProgressRail';
 import { AgentNarrationBubble, NarrationBubble } from '../components/AgentNarrationBubble';
@@ -12,7 +12,7 @@ import { ItineraryTimeline } from '../components/ItineraryTimeline';
 import { ExpenseSummarySheet } from '../components/ExpenseSummarySheet';
 import { CalendarPreview } from '../components/CalendarPreview';
 import { AlertBanner } from '../components/AlertBanner';
-import { TripInputBar } from '../components/TripInputBar';
+import { TripInputBar, GateChip } from '../components/TripInputBar';
 import { ReminderToastContainer, useReminderToasts, TRIP_REMINDERS } from '../components/ReminderToast';
 const hotelExterior = '/hotels/hotel-exterior.jpg';
 const hotelMeeting = '/hotels/hotels-meeting.jpg';
@@ -167,12 +167,195 @@ const HOTELS: HotelOption[] = [
 ];
 
 const CALENDAR_EVENTS_SYNC = [
-  { time: '6:20 AM – 8:10 AM', title: '✈ Flight 6E-342 COK→BOM', color: '#F5A623', isNew: true },
-  { time: '8:30 AM', title: '🚕 Cab · BOM T2 Arrivals', color: '#00C9A7', isNew: true },
-  { time: '2:00 PM – 4:00 PM', title: '💼 Team Meeting · BKC', color: '#7C3AED' },
-  { time: '5:00 PM', title: '🚕 Cab · BKC → BOM T2', color: '#00C9A7', isNew: true },
-  { time: '7:15 PM – 9:00 PM', title: '✈ Return Flight BOM→COK', color: '#F5A623', isNew: true },
+  { time: '6:20 AM – 8:10 AM', title: 'Flight 6E-342 COK→BOM', color: '#F5A623', isNew: true },
+  { time: '8:30 AM', title: 'Cab · BOM T2 Arrivals', color: '#00C9A7', isNew: true },
+  { time: '2:00 PM – 4:00 PM', title: 'Team Meeting · BKC', color: '#7C3AED' },
+  { time: '5:00 PM', title: 'Cab · BKC → BOM T2', color: '#00C9A7', isNew: true },
+  { time: '7:15 PM – 9:00 PM', title: 'Return Flight BOM→COK', color: '#F5A623', isNew: true },
 ];
+
+// ─── Edge-case data (Leh trip) ───────────────────────────────────────────────
+
+const LEH_FLIGHTS: FlightOption[] = [
+  {
+    id: 'lf1',
+    airline: 'IndiGo',
+    airlineCode: '6E',
+    flightNumber: '6E-2041',
+    departure: '6:00',
+    arrival: '12:30',
+    duration: '6h 30m',
+    stops: 1,
+    price: 8200,
+    carbonKg: 145,
+    recommended: true,
+    reasoning: 'Best connection via Delhi. Departs early from Kochi, arrives Leh at 12:30 PM — giving you the afternoon to acclimatise before any activity.',
+  },
+  {
+    id: 'lf2',
+    airline: 'Air India',
+    airlineCode: 'AI',
+    flightNumber: 'AI-442',
+    departure: '7:15',
+    arrival: '14:00',
+    duration: '6h 45m',
+    stops: 1,
+    price: 9400,
+    carbonKg: 158,
+  },
+];
+
+const LEH_RETURN_FLIGHTS: FlightOption[] = [
+  {
+    id: 'lr1',
+    airline: 'IndiGo',
+    airlineCode: '6E',
+    flightNumber: '6E-2042',
+    departure: '10:00 AM',
+    arrival: '5:30 PM',
+    duration: '7h 30m',
+    stops: 1,
+    price: 7800,
+    carbonKg: 138,
+    recommended: true,
+    reasoning: 'Morning departure from Leh via Delhi. Arrives Kochi by early evening — a comfortable next-day return.',
+  },
+  {
+    id: 'lr2',
+    airline: 'Air India',
+    airlineCode: 'AI',
+    flightNumber: 'AI-443',
+    departure: '11:30 AM',
+    arrival: '7:00 PM',
+    duration: '7h 30m',
+    stops: 1,
+    price: 8900,
+    carbonKg: 152,
+  },
+];
+
+const LEH_CABS: CabBooking[] = [
+  {
+    id: 'lc1', type: 'Sedan', pickupTime: '1:00 PM',
+    pickupLocation: 'Leh Kushok Bakula Airport',
+    dropLocation: 'The Grand Dragon Ladakh',
+    estimatedFare: 400, travelTime: '15–20 min', provider: 'Uber', label: 'Arrival Cab',
+  },
+  {
+    id: 'lc2', type: 'Sedan', pickupTime: '8:30 AM',
+    pickupLocation: 'The Grand Dragon Ladakh',
+    dropLocation: 'Leh Kushok Bakula Airport',
+    estimatedFare: 400, travelTime: '15–20 min', provider: 'Ola', label: 'Departure Cab',
+  },
+];
+
+const LEH_HOTELS: HotelOption[] = [
+  {
+    id: 'lh1',
+    name: 'The Grand Dragon Ladakh',
+    stars: 5,
+    distanceFromVenue: '1.2 km',
+    pricePerNight: 7800,
+    rating: '4.7',
+    ratingCount: '1.2k',
+    amenities: ['Wifi', 'Breakfast'],
+    recommended: true,
+    reasoning: 'Top-rated hotel in Leh with oxygen-enriched rooms to ease altitude adjustment. Breakfast included and mountain views from every room.',
+    image: hotelExterior,
+  },
+  {
+    id: 'lh2',
+    name: 'Hotel Ladakh Palace',
+    stars: 4,
+    distanceFromVenue: '0.8 km',
+    pricePerNight: 4200,
+    rating: '4.4',
+    ratingCount: '890',
+    amenities: ['Wifi', 'Breakfast', 'Parking'],
+    image: hotelMeeting,
+  },
+];
+
+// ─── Edge-case step definitions ───────────────────────────────────────────────
+
+const EDGE_CASE_STEP_DEFS: StepDef[] = [
+  {
+    step: 1,
+    header: 'Step 1: Searching for flights to Leh',
+    integration: 'MakeMyTrip',
+    integrationIcon: 'flight',
+    text: "I checked all airlines flying to Leh (IXL) on January 26th — that's Republic Day, a national holiday. All commercial flights to Leh are suspended on this date due to restricted airspace operations. I'll need to adjust the travel date. Would you prefer to fly on January 25th or January 27th?",
+    isGate: true,
+    duration: 0,
+    completionText: 'Travel date adjusted — searching Leh flights',
+    accent: '#3B82F6',
+  },
+  {
+    step: 2,
+    header: 'Step 2: Checking same-day return flights',
+    integration: 'MakeMyTrip',
+    integrationIcon: 'flight',
+    text: "I searched for same-day return flights from Leh on your adjusted travel date. Unfortunately, Leh airport operates only 2–3 flights per day and the last outbound departs at 11:30 AM — a same-day return isn't feasible after arriving and settling in. Should I book a next-morning return flight instead?",
+    isGate: true,
+    duration: 0,
+    completionText: 'Return rescheduled to next morning',
+    accent: '#3B82F6',
+  },
+  {
+    step: 3,
+    header: 'Step 3: Overnight stay — hotel needed?',
+    integration: 'Hotels.com',
+    integrationIcon: 'hotel',
+    text: "Since you're now returning the next morning, you'll need accommodation in Leh for the night. Worth noting — Leh sits at 3,524m altitude, so rest and acclimatisation matter. Should I find a hotel, or do you have accommodation arranged?",
+    isGate: true,
+    duration: 0,
+    completionText: 'Accommodation sorted for Leh',
+    accent: '#7C3AED',
+  },
+  {
+    step: 4,
+    header: 'Step 4: Ground transport in Leh',
+    integration: 'Local Taxis',
+    integrationIcon: 'cab',
+    text: "One last thing — Leh airport is about 5 km from the city. Taxis are the primary transport; app-based cabs aren't widely available here. Should I pre-book airport transfers for your arrival and departure?",
+    isGate: true,
+    duration: 0,
+    completionText: 'Ground transport sorted for Leh',
+    accent: '#00C9A7',
+  },
+  {
+    step: 5,
+    header: 'Step 5: Preparing trip summary',
+    integration: 'TripMind',
+    integrationIcon: 'flight',
+    text: "Your Leh trip is all set. I've put together a complete itinerary — flights, hotel, and airport transfers are lined up with the right buffers. Here's how your trip looks.",
+    isGate: false,
+    duration: 3000,
+    completionText: 'Trip summary ready — Leh',
+    accent: '#F5A623',
+  },
+];
+
+// ─── Edge-case chip options (shown above input bar during gate steps) ────────
+
+const EDGE_CASE_CHIPS: Record<number, GateChip[]> = {
+  1: [
+    { label: 'Jan 25 — Day before', value: 'Jan 25', primary: true, accent: '#EF4444' },
+    { label: 'Jan 27 — Day after',  value: 'Jan 27',               accent: '#EF4444' },
+  ],
+  2: [
+    { label: 'Book next-day return',  value: 'next-day', primary: true, accent: '#F5A623' },
+    { label: "I'll manage my return", value: 'own',                    accent: '#F5A623' },
+  ],
+  3: [
+    { label: 'Yes, find a hotel',    value: 'hotel', primary: true, accent: '#7C3AED' },
+    { label: 'I have accommodation', value: 'own',                  accent: '#7C3AED' },
+  ],
+  4: [
+    { label: 'Yes, book transfers', value: 'cab', primary: true, accent: '#00C9A7' },
+    { label: "I'll arrange my own", value: 'own',                accent: '#00C9A7' },
+  ],
+};
 
 // ─── Step definitions ────────────────────────────────────────────────────────
 
@@ -197,7 +380,7 @@ const STEP_DEFS: StepDef[] = [
     text: "I found flights for both legs of your trip. For the outbound I'd recommend the 6:20 AM IndiGo (₹4,850, non-stop, arrives 8:10 AM). For the return, the 7:15 PM IndiGo gets you home by 9 PM with a comfortable buffer after your 2 PM meeting. Pick your preferred options below.",
     isGate: true,
     duration: 0,
-    completionText: '✈️ Flights booked — IndiGo 6E-342 + 6E-351',
+    completionText: 'Flights booked — IndiGo 6E-342 + 6E-351',
     accent: '#3B82F6',
   },
   {
@@ -208,7 +391,7 @@ const STEP_DEFS: StepDef[] = [
     text: "Now let me sort your ground transport. You land at T2 at 8:10 AM — I'm adding a 20-minute buffer for deplaning. I'll book a cab for 8:30 AM pickup. For the return, your meeting ends at 4 PM — I'm recommending a 5:00 PM cab from BKC to catch your 7:15 PM flight. That's a comfortable 2h 15m buffer.",
     isGate: true,
     duration: 0,
-    completionText: '🚕 Cabs confirmed — Arrival 8:30 AM · Departure 5:00 PM',
+    completionText: 'Cabs confirmed — Arrival 8:30 AM · Departure 5:00 PM',
   },
   {
     step: 3,
@@ -218,7 +401,7 @@ const STEP_DEFS: StepDef[] = [
     text: "You land at 8:10 AM with a 2 PM meeting — that's nearly 6 hours. I found 3 great options near BKC. I'd recommend the Hyatt Regency — it's 0.4 km from your venue, a 5-star, and you can check in right after landing. Want me to book it, or would you prefer to skip?",
     isGate: true,
     duration: 0,
-    completionText: '🏨 Hotel booked — Hyatt Regency BKC',
+    completionText: 'Hotel booked — Hyatt Regency BKC',
   },
   {
     step: 4,
@@ -236,7 +419,7 @@ const STEP_DEFS: StepDef[] = [
     integrationIcon: 'calendar',
     text: "I'm adding all of this to your Google Calendar now — the flights, both cab pickups, and I've blocked your full day as 'Travel: Mumbai'. I've also set 3 reminders: the night before, 2 hours before cab, and 30 minutes before cab.",
     duration: 3500,
-    completionText: '📅 Calendar synced — 5 events added',
+    completionText: 'Calendar synced — 5 events added',
   },
   {
     step: 6,
@@ -245,7 +428,7 @@ const STEP_DEFS: StepDef[] = [
     integrationIcon: 'expense',
     text: "Here's your complete trip cost breakdown. Total spend is ₹13,290 — well within your ₹15,000 policy limit. Submitting for pre-approval automatically.",
     duration: 3000,
-    completionText: '💳 Expense submitted for pre-approval',
+    completionText: 'Expense submitted for pre-approval',
   },
 ];
 
@@ -259,20 +442,42 @@ function getTimestamp() {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function AgentLiveScreen() {
-  const navigate = useNavigate();
-  const feedRef = useRef<HTMLDivElement>(null);
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const feedRef    = useRef<HTMLDivElement>(null);
 
-  const [bubbles, setBubbles] = useState<NarrationBubble[]>([]);
+  // Edge-case mode — triggered by Example 2
+  const edgeCaseMode = (location.state as any)?.mode === 'edge-case';
+  const totalSteps   = edgeCaseMode ? EDGE_CASE_STEP_DEFS.length : STEP_DEFS.length;
+
+  const [bubbles, setBubbles]       = useState<NarrationBubble[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [isGateActive, setIsGateActive] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isTyping, setIsTyping]     = useState(false);
   const [showDisruption, setShowDisruption] = useState(false);
-  const [showPip, setShowPip] = useState(false);
+  const [showPip, setShowPip]       = useState(false);
   const [activeCard, setActiveCard] = useState<
-    'flights' | 'cabs' | 'hotels' | 'itinerary' | 'calendar-sync' | 'expense' | null
+    | 'flights' | 'cabs' | 'hotels' | 'itinerary' | 'calendar-sync' | 'expense'
+    | 'no-flights-question' | 'no-return-question' | 'hotel-question' | 'cab-question'
+    | null
   >('flights');
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const { toasts, add: addToast, dismiss: dismissToast } = useReminderToasts();
+
+  // Edge-case user choices
+  const [chosenDate,    setChosenDate]    = useState<string>('Jan 25');
+  const [wantsHotel,    setWantsHotel]    = useState(true);
+  const [wantsOwnReturn, setWantsOwnReturn] = useState(false);
+  const [wantsCab,      setWantsCab]      = useState(true);
+
+  // Edge-case user response labels shown between bubbles
+  const [edgeCaseResponses, setEdgeCaseResponses] = useState<Record<number, string>>({});
+
+  function recordResponse(step: number, value: string) {
+    const chips = EDGE_CASE_CHIPS[step] ?? [];
+    const label = chips.find(c => c.value === value)?.label ?? value;
+    setEdgeCaseResponses(prev => ({ ...prev, [step]: label }));
+  }
 
   // Scroll feed to bottom when new bubbles appear or action card slides in
   useEffect(() => {
@@ -291,7 +496,8 @@ export function AgentLiveScreen() {
   }, []);
 
   function startStep(stepNum: number) {
-    const def = STEP_DEFS[stepNum - 1];
+    const defs = edgeCaseMode ? EDGE_CASE_STEP_DEFS : STEP_DEFS;
+    const def  = defs[stepNum - 1];
     if (!def) return;
 
     const bubble: NarrationBubble = {
@@ -308,7 +514,6 @@ export function AgentLiveScreen() {
     };
 
     setBubbles(prev => {
-      // Mark previous bubble as done
       const updated = prev.map((b, i) =>
         i === prev.length - 1 && b.status !== 'done' ? { ...b, status: 'done' as const } : b
       );
@@ -319,15 +524,10 @@ export function AgentLiveScreen() {
     setIsTyping(true);
     setIsGateActive(def.isGate ?? false);
 
-    // Set card based on step
-    const cardMap: Record<number, typeof activeCard> = {
-      1: 'flights',
-      2: 'cabs',
-      3: 'hotels',
-      4: 'itinerary',
-      5: 'calendar-sync',
-      6: 'expense',
-    };
+    // Card map — normal vs edge-case
+    const cardMap: Record<number, typeof activeCard> = edgeCaseMode
+      ? { 1: 'no-flights-question', 2: 'no-return-question', 3: 'hotel-question', 4: 'cab-question' }
+      : { 1: 'flights', 2: 'cabs', 3: 'hotels', 4: 'itinerary', 5: 'calendar-sync', 6: 'expense' };
     setActiveCard(cardMap[stepNum] ?? null);
   }
 
@@ -338,13 +538,28 @@ export function AgentLiveScreen() {
       prev.map((b, i) => (i === prev.length - 1 ? { ...b, status: 'active' } : b))
     );
 
-    const def = STEP_DEFS[currentStep - 1];
+    const defs = edgeCaseMode ? EDGE_CASE_STEP_DEFS : STEP_DEFS;
+    const def  = defs[currentStep - 1];
     if (!def?.isGate && def?.duration) {
       // Auto-advance
       setTimeout(() => {
         completeBubble();
-        if (currentStep < 6) {
+        if (currentStep < totalSteps) {
           setTimeout(() => startStep(currentStep + 1), 400);
+        } else if (edgeCaseMode) {
+          // Edge-case flow ends after trip summary — navigate to unified review
+          setTimeout(() => navigate('/unified-review', {
+            state: {
+              selectedFlight:       LEH_FLIGHTS[0],
+              selectedReturnFlight: wantsOwnReturn ? null : LEH_RETURN_FLIGHTS[0],
+              selectedCabs:         wantsCab ? LEH_CABS : [],
+              selectedHotel:        wantsHotel ? LEH_HOTELS[0] : null,
+              allFlights:           LEH_FLIGHTS,
+              allReturnFlights:     wantsOwnReturn ? [] : LEH_RETURN_FLIGHTS,
+              allCabs:              LEH_CABS,
+              allHotels:            LEH_HOTELS,
+            },
+          }), 600);
         } else {
           setTimeout(() => navigate('/confirmed'), 600);
         }
@@ -361,22 +576,38 @@ export function AgentLiveScreen() {
   function handleGateApproval() {
     setIsGateActive(false);
     completeBubble();
-    if (currentStep < 6) {
-      // Fire a reminder toast when cabs are confirmed (step 2)
-      if (currentStep === 2) {
+    if (currentStep < totalSteps) {
+      if (!edgeCaseMode && currentStep === 2) {
         setTimeout(() => addToast(TRIP_REMINDERS.cabArriving(12)), 1200);
       }
       setTimeout(() => startStep(currentStep + 1), 500);
     } else {
-      // All gates approved → confirmed
       setTimeout(() => navigate('/confirmed'), 800);
+    }
+  }
+
+  // Edge-case gate: capture user choice then advance
+  function handleEdgeCaseChoice(step: number, choice: string) {
+    recordResponse(step, choice);
+    if (step === 1) {
+      setChosenDate(choice);
+      handleGateApproval();
+    } else if (step === 2) {
+      setWantsOwnReturn(choice === 'own');
+      handleGateApproval();
+    } else if (step === 3) {
+      setWantsHotel(choice === 'hotel');
+      handleGateApproval();
+    } else if (step === 4) {
+      setWantsCab(choice === 'cab');
+      handleGateApproval();
     }
   }
 
   // Highlighted section banner shown above results
   function SectionBanner({
-    emoji, title, subtitle, accent,
-  }: { emoji: string; title: string; subtitle: string; accent: string }) {
+    icon, title, subtitle, accent,
+  }: { icon: React.ReactNode; title: string; subtitle: string; accent: string }) {
     return (
       <motion.div
         initial={{ opacity: 0, y: -6 }}
@@ -395,9 +626,9 @@ export function AgentLiveScreen() {
         <div style={{
           width: '32px', height: '32px', borderRadius: '8px',
           background: `${accent}20`, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: '16px', flexShrink: 0,
+          justifyContent: 'center', color: accent, flexShrink: 0,
         }}>
-          {emoji}
+          {icon}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
@@ -452,7 +683,7 @@ export function AgentLiveScreen() {
         return (
           <>
             <SectionBanner
-              emoji="✈️"
+              icon={<Plane size={16} />}
               title="Flights Found"
               subtitle="Round trip · COK ↔ BOM · Apr 15 · Select outbound & return"
               accent="#3B82F6"
@@ -472,7 +703,7 @@ export function AgentLiveScreen() {
         return (
           <>
             <SectionBanner
-              emoji="🚕"
+              icon={<Car size={16} />}
               title="2 Cabs Arranged"
               subtitle="Apr 15 · Arrival + departure transfers · Approve to confirm"
               accent={tm.accentTeal}
@@ -485,7 +716,7 @@ export function AgentLiveScreen() {
         return (
           <>
             <SectionBanner
-              emoji="🏨"
+              icon={<Building2 size={16} />}
               title="3 Hotels Near BKC"
               subtitle="Apr 15 · Day use & overnight · Select to book"
               accent="#7C3AED"
@@ -498,9 +729,9 @@ export function AgentLiveScreen() {
         return (
           <>
             <SectionBanner
-              emoji="📋"
-              title="Your Day — April 15"
-              subtitle="Full itinerary with buffers · Tap any item to see reasoning"
+              icon={<ClipboardList size={16} />}
+              title={edgeCaseMode ? `Your Leh Trip — ${chosenDate}` : 'Your Day — April 15'}
+              subtitle={edgeCaseMode ? 'Flights · Hotel · Transfers · Full plan' : 'Full itinerary with buffers · Tap any item to see reasoning'}
               accent={tm.accentAmber}
             />
             <div style={{
@@ -518,7 +749,7 @@ export function AgentLiveScreen() {
         return (
           <>
             <SectionBanner
-              emoji="📅"
+              icon={<CalendarDays size={16} />}
               title="Calendar Updated"
               subtitle="Google Calendar · 5 events added · Apr 15"
               accent={tm.accentAmber}
@@ -531,13 +762,54 @@ export function AgentLiveScreen() {
         return (
           <>
             <SectionBanner
-              emoji="💰"
+              icon={<Wallet size={16} />}
               title="Trip Cost Breakdown"
               subtitle="Total ₹13,290 · Within ₹15,000 policy limit"
               accent="#7C3AED"
             />
             <ExpenseSummarySheet readOnly />
           </>
+        );
+
+      // ── Edge-case question cards ──────────────────────────────────────────
+      case 'no-flights-question':
+        return (
+          <SectionBanner
+            icon={<Ban size={16} />}
+            title="No Flights on Republic Day"
+            subtitle="Jan 26 — Leh (IXL) · Airspace restricted · Choose a travel date below"
+            accent="#EF4444"
+          />
+        );
+
+      case 'no-return-question':
+        return (
+          <SectionBanner
+            icon={<RotateCcw size={16} />}
+            title="Same-Day Return Unavailable"
+            subtitle={`Leh → Kochi · ${chosenDate} · Last outbound at 11:30 AM · Choose below`}
+            accent={tm.accentAmber}
+          />
+        );
+
+      case 'hotel-question':
+        return (
+          <SectionBanner
+            icon={<Building2 size={16} />}
+            title="Overnight Stay in Leh"
+            subtitle="Accommodation needed · 3,524m altitude · 1 night · Choose below"
+            accent="#7C3AED"
+          />
+        );
+
+      case 'cab-question':
+        return (
+          <SectionBanner
+            icon={<Car size={16} />}
+            title="Airport Transfers in Leh"
+            subtitle="Leh (IXL) · ~5 km to city · Pre-book taxi · Choose below"
+            accent={tm.accentTeal}
+          />
         );
 
       default:
@@ -547,11 +819,54 @@ export function AgentLiveScreen() {
 
   // Action card for a COMPLETED step shown inline when expanded in accordion
   function getActionCardForStep(step: number): React.ReactNode {
+    // Edge-case completed accordion cards
+    if (edgeCaseMode) {
+      switch (step) {
+        case 1: return (
+          <>
+            <SectionBanner icon={<CalendarDays size={16} />} title="Date Adjusted" subtitle={`Travel date changed to ${chosenDate} · Leh (IXL)`} accent="#EF4444" />
+          </>
+        );
+        case 2: return (
+          <>
+            <SectionBanner icon={<RotateCcw size={16} />} title={wantsOwnReturn ? 'Managing own return' : 'Next-day return booked'} subtitle={`Leh → Kochi · ${chosenDate === 'Jan 25' ? 'Jan 26' : 'Jan 28'} morning`} accent={tm.accentAmber} />
+          </>
+        );
+        case 3: return (
+          <SectionBanner icon={<Building2 size={16} />} title={wantsHotel ? 'Hotel — The Grand Dragon Ladakh' : 'Own accommodation'} subtitle="Leh · 1 night" accent="#7C3AED" />
+        );
+        case 4: return (
+          <>
+            {wantsCab
+              ? (
+                <>
+                  <SectionBanner icon={<Car size={16} />} title="Transfers Booked" subtitle="Arrival + departure · Leh airport ↔ hotel" accent={tm.accentTeal} />
+                  <CabBookingCard cabs={LEH_CABS} onConfirm={() => {}} />
+                </>
+              ) : (
+                <SectionBanner icon={<Car size={16} />} title="Own transport arranged" subtitle="Leh airport transfers · self-managed" accent={tm.accentTeal} />
+              )
+            }
+          </>
+        );
+        case 5: return (
+          <>
+            <SectionBanner icon={<ClipboardList size={16} />} title={`Your Leh Trip — ${chosenDate}`} subtitle="Flights · Hotel · Transfers · Full plan" accent={tm.accentAmber} />
+            <div style={{ background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`, borderRadius: '16px', padding: '16px' }}>
+              <ItineraryTimeline />
+            </div>
+          </>
+        );
+        default: return null;
+      }
+    }
+
+    // Normal flow accordion cards
     switch (step) {
       case 1:
         return (
           <>
-            <SectionBanner emoji="✈️" title="Flights Booked" subtitle="Round trip · COK ↔ BOM · IndiGo 6E-342 + 6E-351" accent="#3B82F6" />
+            <SectionBanner icon={<Plane size={16} />} title="Flights Booked" subtitle="Round trip · COK ↔ BOM · IndiGo 6E-342 + 6E-351" accent="#3B82F6" />
             <FlightOptionCard
               flights={FLIGHTS}
               returnFlights={RETURN_FLIGHTS}
@@ -565,21 +880,21 @@ export function AgentLiveScreen() {
       case 2:
         return (
           <>
-            <SectionBanner emoji="🚕" title="2 Cabs Confirmed" subtitle="Apr 15 · Arrival 8:30 AM + Departure 5:00 PM" accent={tm.accentTeal} />
+            <SectionBanner icon={<Car size={16} />} title="2 Cabs Confirmed" subtitle="Apr 15 · Arrival 8:30 AM + Departure 5:00 PM" accent={tm.accentTeal} />
             <CabBookingCard cabs={CABS} onConfirm={() => {}} />
           </>
         );
       case 3:
         return (
           <>
-            <SectionBanner emoji="🏨" title="Hotel Booked" subtitle="Hyatt Regency BKC · Apr 15 · Day use" accent="#7C3AED" />
+            <SectionBanner icon={<Building2 size={16} />} title="Hotel Booked" subtitle="Hyatt Regency BKC · Apr 15 · Day use" accent="#7C3AED" />
             <HotelOptionCard hotels={HOTELS} onSelect={() => {}} />
           </>
         );
       case 4:
         return (
           <>
-            <SectionBanner emoji="📋" title="Your Day — April 15" subtitle="Full itinerary with buffers" accent={tm.accentAmber} />
+            <SectionBanner icon={<ClipboardList size={16} />} title="Your Day — April 15" subtitle="Full itinerary with buffers" accent={tm.accentAmber} />
             <div style={{
               background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
               borderRadius: '16px', padding: '16px',
@@ -591,14 +906,14 @@ export function AgentLiveScreen() {
       case 5:
         return (
           <>
-            <SectionBanner emoji="📅" title="Calendar Synced" subtitle="Google Calendar · 5 events added · Apr 15" accent={tm.accentAmber} />
+            <SectionBanner icon={<CalendarDays size={16} />} title="Calendar Synced" subtitle="Google Calendar · 5 events added · Apr 15" accent={tm.accentAmber} />
             <CalendarPreview events={CALENDAR_EVENTS_SYNC} showSync={true} />
           </>
         );
       case 6:
         return (
           <>
-            <SectionBanner emoji="💰" title="Trip Cost Breakdown" subtitle="Total ₹13,290 · Within ₹15,000 policy limit" accent="#7C3AED" />
+            <SectionBanner icon={<Wallet size={16} />} title="Trip Cost Breakdown" subtitle="Total ₹13,290 · Within ₹15,000 policy limit" accent="#7C3AED" />
             <ExpenseSummarySheet readOnly />
           </>
         );
@@ -652,7 +967,7 @@ export function AgentLiveScreen() {
               style={{ width: '8px', height: '8px', borderRadius: '50%', background: tm.accentAmber }}
             />
             <span style={{ fontSize: '11px', color: tm.textPrimary, fontFamily: fonts.mono }}>
-              TripMind working… Step {currentStep} of 6
+              TripMind working… Step {currentStep} of {totalSteps}
             </span>
           </motion.div>
         )}
@@ -725,26 +1040,28 @@ export function AgentLiveScreen() {
             >
               <Minimize2 size={14} color={tm.textSecondary} />
             </button>
-            <button
-              onClick={() => setShowDisruption(!showDisruption)}
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: tm.bgSurface,
-                border: `1px solid ${tm.borderSubtle}`,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Settings size={14} color={tm.textSecondary} />
-            </button>
+            {!edgeCaseMode && (
+              <button
+                onClick={() => setShowDisruption(!showDisruption)}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: tm.bgSurface,
+                  border: `1px solid ${tm.borderSubtle}`,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Settings size={14} color={tm.textSecondary} />
+              </button>
+            )}
           </div>
         </div>
 
-        <ProgressRail currentStep={currentStep} totalSteps={6} isGate={isGateActive} />
+        <ProgressRail currentStep={currentStep} totalSteps={totalSteps} isGate={isGateActive} />
       </div>
 
       {/* Disruption banner */}
@@ -769,15 +1086,48 @@ export function AgentLiveScreen() {
         }}
       >
         {bubbles.map((bubble, index) => (
-          <AgentNarrationBubble
-            key={bubble.id}
-            bubble={bubble}
-            isLatest={index === bubbles.length - 1}
-            onTypingComplete={index === bubbles.length - 1 ? onTypingComplete : undefined}
-            isExpanded={expandedStep === bubble.step}
-            onToggle={() => setExpandedStep(prev => prev === bubble.step ? null : bubble.step)}
-            actionCard={getActionCardForStep(bubble.step)}
-          />
+          <React.Fragment key={bubble.id}>
+            <AgentNarrationBubble
+              bubble={bubble}
+              isLatest={index === bubbles.length - 1}
+              onTypingComplete={index === bubbles.length - 1 ? onTypingComplete : undefined}
+              isExpanded={expandedStep === bubble.step}
+              onToggle={() => setExpandedStep(prev => prev === bubble.step ? null : bubble.step)}
+              actionCard={getActionCardForStep(bubble.step)}
+            />
+            {/* User response — shown after each completed edge-case gate bubble */}
+            {edgeCaseMode && edgeCaseResponses[bubble.step] && bubble.status === 'done' && (
+              <motion.div
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ type: 'spring', stiffness: 340, damping: 32 }}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  marginBottom: '12px',
+                  paddingLeft: '40px',
+                }}
+              >
+                <div style={{
+                  background: tm.bgElevated,
+                  border: `1px solid ${tm.borderSubtle}`,
+                  borderRadius: '16px 16px 4px 16px',
+                  padding: '9px 14px',
+                  maxWidth: '80%',
+                }}>
+                  <span style={{
+                    fontSize: '13px',
+                    fontFamily: fonts.body,
+                    fontWeight: 500,
+                    color: tm.textPrimary,
+                    lineHeight: 1.4,
+                  }}>
+                    {edgeCaseResponses[bubble.step]}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </React.Fragment>
         ))}
 
         {/* Agent thinking indicator */}
@@ -814,8 +1164,12 @@ export function AgentLiveScreen() {
         </AnimatePresence>
       </div>
 
-      {/* Input bar */}
-      <TripInputBar placeholder="Ask me anything..." />
+      {/* Input bar — gate options appear above it once narration finishes typing */}
+      <TripInputBar
+        placeholder="Ask me anything..."
+        chips={edgeCaseMode && isGateActive && !isTyping ? EDGE_CASE_CHIPS[currentStep] : undefined}
+        onGateSubmit={edgeCaseMode && isGateActive && !isTyping ? val => handleEdgeCaseChoice(currentStep, val) : undefined}
+      />
     </div>
   );
 }

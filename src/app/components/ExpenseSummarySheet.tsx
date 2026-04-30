@@ -1,19 +1,19 @@
 import { motion } from 'motion/react';
-import { Check, ChevronRight } from 'lucide-react';
+import { Check, ChevronRight, Plane, Building2, Car, CreditCard } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 
 interface ExpenseItem {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   amount: number;
 }
 
 const ITEMS: ExpenseItem[] = [
-  { icon: '✈️', label: 'Flight (COK → BOM, 6E-342)', amount: 4850 },
-  { icon: '✈️', label: 'Return Flight (BOM → COK, 6E-351)', amount: 4650 },
-  { icon: '🏨', label: 'Hyatt Regency BKC — Day use', amount: 2500 },
-  { icon: '🚕', label: 'Cab — BOM Arrival', amount: 650 },
-  { icon: '🚕', label: 'Cab — BOM to Airport', amount: 640 },
+  { icon: <Plane     size={14} color="#3B82F6" />, label: 'Flight (COK → BOM, 6E-342)', amount: 4850 },
+  { icon: <Plane     size={14} color="#3B82F6" />, label: 'Return Flight (BOM → COK, 6E-351)', amount: 4650 },
+  { icon: <Building2 size={14} color="#7C3AED" />, label: 'Hyatt Regency BKC — Day use', amount: 2500 },
+  { icon: <Car       size={14} color="#00C9A7" />, label: 'Cab — BOM Arrival', amount: 650 },
+  { icon: <Car       size={14} color="#00C9A7" />, label: 'Cab — BOM to Airport', amount: 640 },
 ];
 
 const TOTAL = ITEMS.reduce((sum, item) => sum + item.amount, 0);
@@ -43,7 +43,9 @@ export function ExpenseSummarySheet({ onSubmit, onSkip, readOnly }: ExpenseSumma
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <span style={{ fontSize: '18px' }}>💳</span>
+        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: `${tm.accentAmber}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <CreditCard size={15} color={tm.accentAmber} />
+        </div>
         <div>
           <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
             Trip Expense Summary
@@ -71,7 +73,7 @@ export function ExpenseSummarySheet({ onSubmit, onSkip, readOnly }: ExpenseSumma
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '14px' }}>{item.icon}</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
               <span style={{ fontSize: '12px', color: tm.textNarration, fontFamily: fonts.body }}>
                 {item.label}
               </span>

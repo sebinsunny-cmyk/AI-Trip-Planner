@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, X, Plane, Clock } from 'lucide-react';
+import { Bell, X, Plane, Clock, Car } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 
 export type ReminderType = 'wake-up' | 'cab' | 'flight' | 'general';
@@ -15,11 +15,11 @@ export interface ReminderToastData {
   autoDismissMs?: number;
 }
 
-const TYPE_CONFIG: Record<ReminderType, { icon: React.ComponentType<{ size: number; color: string }>; accent: string; bg: string; emoji: string }> = {
-  'wake-up': { icon: Bell,  accent: '#F5A623', bg: '#F5A62315', emoji: '⏰' },
-  'cab':     { icon: Clock, accent: '#00C9A7', bg: '#00C9A715', emoji: '🚕' },
-  'flight':  { icon: Plane, accent: '#F5A623', bg: '#F5A62315', emoji: '✈️' },
-  'general': { icon: Bell,  accent: '#8B949E', bg: '#8B949E15', emoji: '🔔' },
+const TYPE_CONFIG: Record<ReminderType, { icon: React.ComponentType<{ size: number; color: string }>; accent: string; bg: string }> = {
+  'wake-up': { icon: Bell,  accent: '#F5A623', bg: '#F5A62315' },
+  'cab':     { icon: Car,   accent: '#00C9A7', bg: '#00C9A715' },
+  'flight':  { icon: Plane, accent: '#F5A623', bg: '#F5A62315' },
+  'general': { icon: Bell,  accent: '#8B949E', bg: '#8B949E15' },
 };
 
 interface ReminderToastProps {
@@ -86,12 +86,11 @@ function SingleToast({ toast, onDismiss }: ReminderToastProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '16px',
           flexShrink: 0,
           marginTop: '1px',
         }}
       >
-        {cfg.emoji}
+        <Icon size={18} color={cfg.accent} />
       </motion.div>
 
       {/* Content */}

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Check } from 'lucide-react';
+import { Check, CalendarDays } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 
 interface CalendarEvent {
@@ -43,7 +43,7 @@ export function CalendarPreview({ events, showSync }: CalendarPreviewProps) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px' }}>📅</span>
+          <CalendarDays size={14} color={tm.accentAmber} />
           <span style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
             Google Calendar
           </span>

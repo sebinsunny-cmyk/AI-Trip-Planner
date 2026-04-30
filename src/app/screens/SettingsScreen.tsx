@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, Globe, Car, Plane, Shield, Sun, Moon, Check, X, Building2, Package, MapPin, Navigation } from 'lucide-react';
+import { ChevronRight, Globe, Car, Plane, Shield, Sun, Moon, Check, X, Building2, Package, MapPin, LocateFixed } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router';
@@ -29,16 +29,16 @@ const PREFERENCE_OPTIONS: Record<string, string[]> = {
   ],
 };
 
-const PREFERENCE_ICONS: Record<string, string> = {
-  'Flight class':      '✈️',
-  'Flight type':       '✈️',
-  'Seat preference':   '💺',
-  'Preferred airline': '✈️',
-  'Cab type':          '🚕',
-  'Room type':         '🏨',
-  'Hotel stars':       '🏨',
-  'Meal preference':   '🍽️',
-  'Travel policy':     '🛡️',
+const PREFERENCE_ICONS: Record<string, React.ReactNode> = {
+  'Flight class':      <Plane    size={20} />,
+  'Flight type':       <Plane    size={20} />,
+  'Seat preference':   <Plane    size={20} />,
+  'Preferred airline': <Plane    size={20} />,
+  'Cab type':          <Car      size={20} />,
+  'Room type':         <Building2 size={20} />,
+  'Hotel stars':       <Building2 size={20} />,
+  'Meal preference':   <Package  size={20} />,
+  'Travel policy':     <Shield   size={20} />,
 };
 
 export function SettingsScreen() {
@@ -65,34 +65,17 @@ export function SettingsScreen() {
   const [directOnly,   setDirectOnly]   = useState(false);
   const [cabinOnly,    setCabinOnly]    = useState(true);
   const [baseLocation,      setBaseLocation]      = useState('Kochi, Kerala');
-  const [locationDraft,     setLocationDraft]     = useState('');
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
   const [locating,          setLocating]          = useState(false);
-  const [mapQuery,          setMapQuery]          = useState('');
-
-  // Debounce map query so iframe only reloads after user stops typing
-  useEffect(() => {
-    if (!locationSheetOpen) return;
-    const t = setTimeout(() => setMapQuery(locationDraft), 900);
-    return () => clearTimeout(t);
-  }, [locationDraft, locationSheetOpen]);
+  const [locFlat,           setLocFlat]           = useState('');
+  const [locLandmark,       setLocLandmark]       = useState('');
+  const [locLabel,          setLocLabel]          = useState<'Home' | 'Work' | 'Other'>('Home');
 
   function getCurrentLocation() {
     if (!navigator.geolocation) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
-          const data = await res.json();
-          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
-          const state = data.address?.state || '';
-          const loc = [city, state].filter(Boolean).join(', ');
-          if (loc) { setLocationDraft(loc); setMapQuery(loc); }
-        } catch { /* silently ignore */ }
-        setLocating(false);
-      },
+      () => setLocating(false),
       () => setLocating(false),
       { timeout: 8000 },
     );
@@ -354,7 +337,7 @@ export function SettingsScreen() {
             {/* Base Location row */}
             <motion.div
               whileTap={{ backgroundColor: tm.bgElevated }}
-              onClick={() => { setLocationDraft(baseLocation); setMapQuery(baseLocation); setLocationSheetOpen(true); }}
+              onClick={() => setLocationSheetOpen(true)}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', borderBottom: `1px solid ${tm.borderSubtle}`, cursor: 'pointer' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -571,114 +554,264 @@ export function SettingsScreen() {
       {/* ── Base Location bottom sheet ── */}
       <AnimatePresence>
         {locationSheetOpen && (
-          <>
-            <motion.div
-              key="loc-backdrop"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setLocationSheetOpen(false)}
-              style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}
-            />
-            <motion.div
-              key="loc-sheet"
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 51, background: tm.bgSurface, borderRadius: '20px 20px 0 0', border: `1px solid ${tm.borderSubtle}`, borderBottom: 'none' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '10px', paddingBottom: '4px' }}>
-                <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: tm.borderSubtle }} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px 14px', borderBottom: `1px solid ${tm.borderSubtle}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '20px' }}>📍</span>
-                  <div>
-                    <div style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary }}>Base Location</div>
-                    <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>Your home city for trip planning</div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setLocationSheetOpen(false)}
-                  style={{ width: '28px', height: '28px', borderRadius: '50%', background: tm.bgElevated, border: `1px solid ${tm.borderSubtle}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <X size={13} color={tm.textSecondary} />
-                </button>
-              </div>
-              <div style={{ padding: '18px 18px 32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: tm.bgElevated, border: `1px solid ${tm.borderSubtle}`, borderRadius: '12px', padding: '0 14px', height: '48px' }}>
-                  <MapPin size={15} color={tm.textSecondary} />
-                  <input
-                    autoFocus
-                    value={locationDraft}
-                    onChange={e => setLocationDraft(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && locationDraft.trim()) { setBaseLocation(locationDraft.trim()); setLocationSheetOpen(false); } }}
-                    placeholder="e.g. Mumbai, Delhi, Bengaluru"
-                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', fontFamily: fonts.body, color: tm.textPrimary }}
-                  />
-                  {locationDraft && (
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={() => setLocationDraft('')}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}>
-                      <X size={13} color={tm.textSecondary} />
-                    </motion.button>
-                  )}
-                </div>
-                {/* Map preview */}
-                <AnimatePresence>
-                  {mapQuery.trim() && (
-                    <motion.div
-                      key="map"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 140 }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                      style={{ borderRadius: '12px', overflow: 'hidden', border: `1px solid ${tm.borderSubtle}`, flexShrink: 0, position: 'relative' }}
-                    >
-                      <iframe
-                        key={mapQuery}
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed&z=11`}
-                        style={{ width: '100%', height: '140px', border: 'none', display: 'block' }}
-                        title="Location map"
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                      />
-                      {/* Location label pill */}
-                      <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', borderRadius: '20px', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <MapPin size={10} color="#fff" />
-                        <span style={{ fontSize: '11px', color: '#fff', fontFamily: fonts.mono, fontWeight: 600 }}>{mapQuery}</span>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+          <motion.div
+            key="loc-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 50,
+              background: tm.bgPrimary,
+              display: 'flex', flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {/* ── Map section ── */}
+            <div style={{ position: 'relative', height: '44%', flexShrink: 0 }}>
 
-                {/* Get Current Location button */}
+              {/* Map iframe */}
+              <iframe
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(baseLocation)}&output=embed&z=13`}
+                style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                title="Location map"
+                loading="lazy"
+              />
+
+              {/* Dropped pin — centered */}
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%',
+                transform: 'translate(-50%, -100%)',
+                pointerEvents: 'none', zIndex: 2,
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+              }}>
+                <motion.div
+                  initial={{ y: -24, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 16, delay: 0.2 }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                >
+                  <div style={{
+                    width: 38, height: 38, borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${tm.accentAmber}, #e8890f)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+                  }}>
+                    <MapPin size={18} color="#fff" />
+                  </div>
+                  <div style={{
+                    width: 0, height: 0,
+                    borderLeft: '6px solid transparent',
+                    borderRight: '6px solid transparent',
+                    borderTop: `9px solid #e8890f`,
+                  }} />
+                  <div style={{
+                    width: 10, height: 4, borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.22)',
+                    marginTop: '1px', filter: 'blur(2px)',
+                  }} />
+                </motion.div>
+              </div>
+
+              {/* Top overlay: close button */}
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, zIndex: 3,
+                padding: '16px 20px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.38), transparent)',
+              }}>
                 <motion.button
-                  whileTap={{ scale: 0.97 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setLocationSheetOpen(false)}
+                  style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.92)', border: 'none',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 1px 6px rgba(0,0,0,0.18)',
+                  }}
+                >
+                  <X size={15} color="#0D1117" />
+                </motion.button>
+                <div style={{
+                  background: 'rgba(0,0,0,0.38)', backdropFilter: 'blur(8px)',
+                  borderRadius: '20px', padding: '6px 14px',
+                }}>
+                  <span style={{ fontSize: '12px', fontFamily: fonts.mono, fontWeight: 600, color: '#fff' }}>
+                    Base Location
+                  </span>
+                </div>
+              </div>
+
+              {/* Use current location — floating just above bottom sheet */}
+              <div style={{
+                position: 'absolute', bottom: 28, left: 0, right: 0, zIndex: 3,
+                display: 'flex', justifyContent: 'center',
+              }}>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   onClick={getCurrentLocation}
                   disabled={locating}
-                  style={{ width: '100%', padding: '13px', borderRadius: '12px', border: `1px solid ${tm.borderSubtle}`, cursor: locating ? 'default' : 'pointer', background: tm.bgElevated, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: locating ? 0.7 : 1 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '10px 18px', borderRadius: '24px',
+                    background: 'rgba(255,255,255,0.95)', border: 'none',
+                    cursor: locating ? 'default' : 'pointer',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                    opacity: locating ? 0.75 : 1,
+                  }}
                 >
-                  {locating ? (
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                      style={{ width: '14px', height: '14px', borderRadius: '50%', border: `2px solid ${tm.borderSubtle}`, borderTopColor: tm.accentTeal }} />
-                  ) : (
-                    <Navigation size={14} color={tm.accentTeal} />
-                  )}
-                  <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 600, color: tm.accentTeal }}>
-                    {locating ? 'Detecting…' : 'Get Current Location'}
+                  <LocateFixed size={15} color={locating ? '#999' : '#00C9A7'} />
+                  <span style={{ fontSize: '13px', fontFamily: fonts.body, fontWeight: 600, color: locating ? '#999' : '#111' }}>
+                    {locating ? 'Getting location…' : 'Use current location'}
                   </span>
                 </motion.button>
+              </div>
 
-                {/* Save Location button */}
+            </div>
+
+            {/* ── Bottom sheet ── */}
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28, delay: 0.1 }}
+              style={{
+                flex: 1,
+                background: tm.bgPrimary,
+                borderRadius: '20px 20px 0 0',
+                marginTop: '-18px',
+                zIndex: 4,
+                display: 'flex', flexDirection: 'column',
+                boxShadow: '0 -6px 24px rgba(0,0,0,0.18)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Handle */}
+              <div style={{ paddingTop: '10px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: tm.borderSubtle }} />
+              </div>
+
+              {/* Scrollable body */}
+              <div style={{
+                flex: 1, overflowY: 'auto', padding: '14px 20px 8px',
+                scrollbarWidth: 'none', display: 'flex', flexDirection: 'column', gap: '12px',
+              }}>
+
+                {/* Nova hint */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                    background: `linear-gradient(135deg, ${tm.accentAmber}, #e8890f)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px',
+                  }}>🤖</div>
+                  <span style={{ fontSize: '12px', fontFamily: fonts.mono, color: tm.textSecondary, lineHeight: 1.5 }}>
+                    Which city do you usually fly out from?
+                  </span>
+                </div>
+
+                {/* Additional details */}
+                <div style={{
+                  fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono,
+                  fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase' as const,
+                  marginTop: '8px',
+                }}>
+                  Additional details
+                </div>
+
+                {/* Flat / Floor */}
+                <div style={{
+                  display: 'flex', alignItems: 'center',
+                  background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
+                  borderRadius: '14px', padding: '0 14px', height: '48px',
+                }}>
+                  <input
+                    type="text"
+                    value={locFlat}
+                    onChange={e => setLocFlat(e.target.value)}
+                    placeholder="Flat / Floor / Building (optional)"
+                    style={{
+                      flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                      fontSize: '14px', fontFamily: fonts.body, color: tm.textPrimary,
+                    }}
+                  />
+                </div>
+
+                {/* Landmark */}
+                <div style={{
+                  display: 'flex', alignItems: 'center',
+                  background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
+                  borderRadius: '14px', padding: '0 14px', height: '48px',
+                }}>
+                  <input
+                    type="text"
+                    value={locLandmark}
+                    onChange={e => setLocLandmark(e.target.value)}
+                    placeholder="Landmark (optional)"
+                    style={{
+                      flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                      fontSize: '14px', fontFamily: fonts.body, color: tm.textPrimary,
+                    }}
+                  />
+                </div>
+
+                {/* Label chips */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {(['Home', 'Work', 'Other'] as const).map(l => (
+                    <motion.button
+                      key={l}
+                      whileTap={{ scale: 0.93 }}
+                      onClick={() => setLocLabel(l)}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+                        padding: '7px 16px', borderRadius: '20px',
+                        background: locLabel === l ? `${tm.accentAmber}18` : tm.bgSurface,
+                        border: `1px solid ${locLabel === l ? tm.accentAmber : tm.borderSubtle}`,
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', color: locLabel === l ? tm.accentAmber : tm.textSecondary }}>
+                        {l === 'Home' ? <Globe size={13} /> : l === 'Work' ? <Package size={13} /> : <MapPin size={13} />}
+                      </span>
+                      <span style={{
+                        fontSize: '13px', fontFamily: fonts.body, lineHeight: 1,
+                        fontWeight: locLabel === l ? 700 : 400,
+                        color: locLabel === l ? tm.accentAmber : tm.textSecondary,
+                      }}>
+                        {l}
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: '12px 20px 32px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => { if (locationDraft.trim()) { setBaseLocation(locationDraft.trim()); setLocationSheetOpen(false); } }}
-                  disabled={!locationDraft.trim()}
-                  style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', cursor: locationDraft.trim() ? 'pointer' : 'not-allowed', background: locationDraft.trim() ? tm.accentAmber : tm.bgElevated, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  onClick={() => setLocationSheetOpen(false)}
+                  style={{
+                    width: '100%', padding: '15px', borderRadius: '14px', border: 'none',
+                    background: tm.accentAmber,
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: `0 4px 16px ${tm.accentAmber}40`,
+                  }}
                 >
-                  <Check size={14} color={locationDraft.trim() ? '#fff' : tm.textSecondary} strokeWidth={3} />
-                  <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 700, color: locationDraft.trim() ? '#fff' : tm.textSecondary }}>Save Location</span>
+                  <span style={{ fontSize: '15px', fontFamily: fonts.heading, fontWeight: 700, color: '#fff' }}>
+                    Confirm address
+                  </span>
                 </motion.button>
+                <button
+                  onClick={() => setLocationSheetOpen(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                >
+                  <span style={{ fontSize: '13px', fontFamily: fonts.body, color: tm.textSecondary }}>
+                    Cancel
+                  </span>
+                </button>
               </div>
             </motion.div>
-          </>
+
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -728,7 +861,7 @@ export function SettingsScreen() {
                 borderBottom: `1px solid ${tm.borderSubtle}`,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '20px' }}>{PREFERENCE_ICONS[activePicker]}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', color: tm.textSecondary }}>{PREFERENCE_ICONS[activePicker]}</span>
                   <div>
                     <div style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary }}>
                       {activePicker}

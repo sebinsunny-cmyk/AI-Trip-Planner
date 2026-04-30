@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCheck, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCheck, Trash2, Plane, Clock, Bot, Building2, Car, CreditCard, CheckCircle2, RefreshCw, ClipboardList, Ticket, Bell } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 
 type NType = 'trip' | 'reminder' | 'alert' | 'system';
@@ -10,7 +10,7 @@ interface Notif {
   id: string;
   type: NType;
   read: boolean;
-  emoji: string;
+  icon: React.ReactNode;
   color: string;
   bgColor: string;
   title: string;
@@ -22,70 +22,70 @@ interface Notif {
 const INITIAL: Notif[] = [
   {
     id: 'n1', type: 'trip', read: false,
-    emoji: '✈️', color: '#00C9A7', bgColor: '#00C9A715',
+    icon: <Plane size={16} color="#00C9A7" />, color: '#00C9A7', bgColor: '#00C9A715',
     title: 'Flight confirmed — COK → BOM',
     desc: 'IndiGo 6E‑342 · Apr 15, 06:20 AM · PNR: AXMK92',
     time: '2m ago', group: 'Today',
   },
   {
     id: 'n2', type: 'reminder', read: false,
-    emoji: '⏰', color: '#F5A623', bgColor: '#F5A62315',
+    icon: <Clock size={16} color="#F5A623" />, color: '#F5A623', bgColor: '#F5A62315',
     title: 'Check-in opens in 2 hours',
     desc: 'Web check-in for IndiGo 6E‑342 is now open. Seat 12A confirmed.',
     time: '14m ago', group: 'Today',
   },
   {
     id: 'n3', type: 'alert', read: false,
-    emoji: '🤖', color: '#F5A623', bgColor: '#F5A62315',
+    icon: <Bot size={16} color="#F5A623" />, color: '#F5A623', bgColor: '#F5A62315',
     title: 'Agent found a cheaper option',
     desc: 'Air India AI‑501 at ₹10,200 — save ₹2,600 vs current booking.',
     time: '1h ago', group: 'Today',
   },
   {
     id: 'n4', type: 'trip', read: false,
-    emoji: '🏨', color: '#60A5FA', bgColor: '#60A5FA15',
+    icon: <Building2 size={16} color="#60A5FA" />, color: '#60A5FA', bgColor: '#60A5FA15',
     title: 'Hotel booking confirmed',
     desc: 'Taj Santacruz, Mumbai · Apr 15–16 · Room 714',
     time: '3h ago', group: 'Today',
   },
   {
     id: 'n5', type: 'reminder', read: true,
-    emoji: '🚗', color: '#F5A623', bgColor: '#F5A62315',
+    icon: <Car size={16} color="#F5A623" />, color: '#F5A623', bgColor: '#F5A62315',
     title: 'Cab pre-booked for tomorrow',
     desc: 'Uber XL pickup at 04:45 AM from your registered home address.',
     time: '5h ago', group: 'Today',
   },
   {
     id: 'n6', type: 'alert', read: true,
-    emoji: '💳', color: '#FF5C5C', bgColor: '#FF5C5C15',
+    icon: <CreditCard size={16} color="#FF5C5C" />, color: '#FF5C5C', bgColor: '#FF5C5C15',
     title: 'Budget alert — 80% used',
     desc: "You've spent ₹12,200 of your ₹15,000 travel policy this trip.",
     time: '8h ago', group: 'Today',
   },
   {
     id: 'n7', type: 'trip', read: true,
-    emoji: '✅', color: '#00C9A7', bgColor: '#00C9A715',
+    icon: <CheckCircle2 size={16} color="#00C9A7" />, color: '#00C9A7', bgColor: '#00C9A715',
     title: 'Approval received',
     desc: 'Your BLR → DEL trip (Apr 22) was approved by Priya Nair.',
     time: 'Yesterday', group: 'Yesterday',
   },
   {
     id: 'n8', type: 'system', read: true,
-    emoji: '🔄', color: '#8B949E', bgColor: '#8B949E15',
+    icon: <RefreshCw size={16} color="#8B949E" />, color: '#8B949E', bgColor: '#8B949E15',
     title: 'Sync complete',
     desc: 'Google Calendar synced · 2 new events imported successfully.',
     time: 'Yesterday', group: 'Yesterday',
   },
   {
     id: 'n9', type: 'alert', read: true,
-    emoji: '📋', color: '#A78BFA', bgColor: '#A78BFA15',
+    icon: <ClipboardList size={16} color="#A78BFA" />, color: '#A78BFA', bgColor: '#A78BFA15',
     title: 'Travel policy updated',
     desc: 'Max hotel spend raised to ₹6,500/night. Effective immediately.',
     time: '3 days ago', group: 'Earlier',
   },
   {
     id: 'n10', type: 'trip', read: true,
-    emoji: '🎫', color: '#60A5FA', bgColor: '#60A5FA15',
+    icon: <Ticket size={16} color="#60A5FA" />, color: '#60A5FA', bgColor: '#60A5FA15',
     title: 'E-ticket in your inbox',
     desc: 'IndiGo 6E‑342 boarding pass sent to arjun.menon@company.com',
     time: '3 days ago', group: 'Earlier',
@@ -251,9 +251,8 @@ export function NotificationsScreen() {
                 width: '64px', height: '64px', borderRadius: '20px',
                 background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '28px',
               }}>
-                🔔
+                <Bell size={28} color={tm.textSecondary} />
               </div>
               <div style={{ fontSize: '15px', color: tm.textPrimary, fontFamily: fonts.heading, fontWeight: 700 }}>
                 All caught up
@@ -314,9 +313,9 @@ export function NotificationsScreen() {
                             width: '34px', height: '34px', borderRadius: '10px',
                             background: n.bgColor,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '16px', flexShrink: 0,
+                            flexShrink: 0,
                           }}>
-                            {n.emoji}
+                            {n.icon}
                           </div>
 
                           {/* Content */}

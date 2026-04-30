@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Minimize2 } from 'lucide-react';
+import { ArrowLeft, Minimize2, Plane, Car, Building2 } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import { ProgressRail } from '../components/ProgressRail';
 import { AgentNarrationBubble, NarrationBubble } from '../components/AgentNarrationBubble';
@@ -106,7 +106,7 @@ const STEP_DEFS: StepDef[] = [
     integrationIcon: 'flight',
     text: "Scanning morning flights from Kochi to Mumbai on Apr 15. Found 3 options — selecting the best fit: IndiGo 6E-342 departs 6:20 AM, arrives 8:10 AM, non-stop, ₹4,850. Outbound locked in. Now checking return flights — IndiGo 6E-351 at 7:15 PM is ideal. Both flights selected ✓",
     duration: 4000,
-    completionText: '✈️ Best flights selected — 6E-342 + 6E-351',
+    completionText: 'Best flights selected — 6E-342 + 6E-351',
   },
   {
     step: 2,
@@ -115,7 +115,7 @@ const STEP_DEFS: StepDef[] = [
     integrationIcon: 'cab',
     text: "Arranging ground transport. Arrival cab: Uber Sedan from BOM T2 at 8:30 AM to BKC (₹650, ~50 min). Departure cab: Ola Sedan from BKC at 5:00 PM to BOM T2 (₹640, ~50 min). Both cabs lined up ✓",
     duration: 3500,
-    completionText: '🚕 Best cabs selected — Arrival 8:30 AM · Departure 5:00 PM',
+    completionText: 'Best cabs selected — Arrival 8:30 AM · Departure 5:00 PM',
   },
   {
     step: 3,
@@ -124,7 +124,7 @@ const STEP_DEFS: StepDef[] = [
     integrationIcon: 'hotel',
     text: "Checking hotels near BKC for day use. Hyatt Regency BKC is the top pick — 0.4 km from your meeting venue, 5-star rated 4.6, day use ₹2,500. Selected ✓",
     duration: 3500,
-    completionText: '🏨 Best hotel selected — Hyatt Regency BKC',
+    completionText: 'Best hotel selected — Hyatt Regency BKC',
   },
   {
     step: 4,
@@ -243,8 +243,8 @@ export function AgentAutoScreen() {
           borderRadius: '12px', padding: '12px 14px',
         }}
       >
-        <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: '#3B82F6', marginBottom: '8px' }}>
-          ✈️ Flights — Auto-Selected
+        <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: '#3B82F6', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Plane size={12} color="#3B82F6" /> Flights — Auto-Selected
         </div>
         {[{ label: 'Outbound', val: 'IndiGo 6E-342 · 6:20 AM → 8:10 AM · ₹4,850' },
           { label: 'Return',   val: 'IndiGo 6E-351 · 7:15 PM → 9:00 PM · ₹4,650' }].map(r => (
@@ -267,8 +267,8 @@ export function AgentAutoScreen() {
           borderRadius: '12px', padding: '12px 14px',
         }}
       >
-        <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: tm.accentTeal, marginBottom: '8px' }}>
-          🚕 Cabs — Auto-Selected
+        <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: tm.accentTeal, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Car size={12} color={tm.accentTeal} /> Cabs — Auto-Selected
         </div>
         {AUTO_CABS.map(c => (
           <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: `1px solid ${tm.borderSubtle}` }}>
@@ -290,8 +290,8 @@ export function AgentAutoScreen() {
           borderRadius: '12px', padding: '12px 14px',
         }}
       >
-        <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: '#7C3AED', marginBottom: '8px' }}>
-          🏨 Hotel — Auto-Selected
+        <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: '#7C3AED', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Building2 size={12} color="#7C3AED" /> Hotel — Auto-Selected
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono }}>Hyatt Regency BKC</span>

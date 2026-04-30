@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, AlertCircle, ChevronDown } from 'lucide-react';
+import { Check, AlertCircle, ChevronDown, Plane, Car, Building2, CalendarDays, CreditCard, Link2 } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 
 export type BubbleStatus = 'typing' | 'active' | 'done' | 'failed';
@@ -18,21 +18,24 @@ export interface NarrationBubble {
   accent?: string; // active border color, defaults to accentAmber
 }
 
+const INTEGRATION_ICONS: Record<string, React.ReactNode> = {
+  calendar: <CalendarDays size={11} />,
+  flight:   <Plane        size={11} />,
+  cab:      <Car          size={11} />,
+  hotel:    <Building2    size={11} />,
+  expense:  <CreditCard   size={11} />,
+};
+
 function IntegrationBadge({ name, icon }: { name: string; icon?: string }) {
-  const iconMap: Record<string, string> = {
-    calendar: '📅',
-    flight:   '✈️',
-    cab:      '🚕',
-    hotel:    '🏨',
-    expense:  '💳',
-  };
   return (
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: '4px',
       background: tm.bgElevated, border: `1px solid ${tm.borderSubtle}`,
       borderRadius: '20px', padding: '2px 8px', marginBottom: '8px',
     }}>
-      <span style={{ fontSize: '11px' }}>{icon ? iconMap[icon] : '🔗'}</span>
+      <span style={{ display: 'flex', alignItems: 'center', color: tm.textSecondary }}>
+        {icon ? INTEGRATION_ICONS[icon] : <Link2 size={11} />}
+      </span>
       <span style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, fontWeight: 500 }}>
         {name}
       </span>
@@ -159,10 +162,9 @@ export function AgentNarrationBubble({
   const isActive   = bubble.status === 'active' || isTyping;
   const collapsible = isDone && !isLatest;
 
-  const iconMap: Record<string, string> = {
-    calendar: '📅', flight: '✈️', cab: '🚕', hotel: '🏨', expense: '💳',
-  };
-  const integrationEmoji = bubble.integrationIcon ? iconMap[bubble.integrationIcon] : '🔗';
+  const integrationIcon = bubble.integrationIcon
+    ? INTEGRATION_ICONS[bubble.integrationIcon]
+    : <Link2 size={15} />;
 
   return (
     <motion.div
@@ -189,16 +191,6 @@ export function AgentNarrationBubble({
             display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left',
           }}
         >
-          {/* Integration emoji badge */}
-          <div style={{
-            width: '34px', height: '34px', borderRadius: '10px',
-            background: `${tm.accentTeal}18`, border: `1px solid ${tm.accentTeal}35`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '15px', flexShrink: 0,
-          }}>
-            {integrationEmoji}
-          </div>
-
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Prominent completion text */}
             <p style={{
