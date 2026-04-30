@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Star, MapPin, ChevronRight, Wifi, Coffee, Car } from 'lucide-react';
+import { Star, MapPin, ChevronRight, Wifi, Coffee, Car, Check } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 
 export interface HotelOption {
   id: string;
@@ -29,6 +30,9 @@ const AMENITY_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function HotelOptionCard({ hotels, onSelect }: HotelOptionCardProps) {
+  const { isDark } = useTheme();
+  const violet = isDark ? '#A78BFA' : '#7C3AED';
+
   const [selected, setSelected] = useState<string>(
     hotels.find(h => h.recommended)?.id ?? hotels[0]?.id
   );
@@ -52,8 +56,8 @@ export function HotelOptionCard({ hotels, onSelect }: HotelOptionCardProps) {
             onClick={() => setSelected(hotel.id)}
             style={{
               background: tm.bgSurface,
-              border: `1px solid ${isSelected ? `${tm.accentAmber}60` : tm.borderSubtle}`,
-              borderLeft: `3px solid ${isSelected ? tm.accentAmber : tm.borderSubtle}`,
+              border: `1px solid ${isSelected ? `${violet}60` : tm.borderSubtle}`,
+              borderLeft: `3px solid ${isSelected ? violet : 'transparent'}`,
               borderRadius: '16px',
               overflow: 'hidden',
               marginBottom: '10px',
@@ -76,15 +80,24 @@ export function HotelOptionCard({ hotels, onSelect }: HotelOptionCardProps) {
                 }} />
               )}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.6) 100%)' }} />
+              {/* Selection check — top left */}
+              {isSelected && (
+                <div style={{
+                  position: 'absolute', top: '8px', left: '10px',
+                  width: '20px', height: '20px', borderRadius: '50%',
+                  background: violet, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Check size={11} color="#fff" strokeWidth={3} />
+                </div>
+              )}
+              {/* Nova's Pick badge — top right */}
               {hotel.recommended && (
                 <span style={{
                   position: 'absolute', top: '8px', right: '8px',
                   fontSize: '9px', fontFamily: fonts.mono, fontWeight: 700,
-                  color: '#ffffff', background: tm.accentAmber,
+                  color: '#ffffff', background: '#7C3AED',
                   borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.04em',
-                }}>
-                  BEST FIT
-                </span>
+                }}>★ Nova's Pick</span>
               )}
             </div>
 
@@ -93,21 +106,10 @@ export function HotelOptionCard({ hotels, onSelect }: HotelOptionCardProps) {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  {false && (
-                    <span style={{
-                      fontSize: '9px', fontFamily: fonts.mono, fontWeight: 700,
-                      color: '#ffffff', background: tm.accentAmber,
-                      borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.04em',
-                    }}>
-                      BEST FIT
-                    </span>
-                  )}
-                  <div style={{ display: 'flex', gap: '2px' }}>
-                    {Array.from({ length: hotel.stars }).map((_, i) => (
-                      <Star key={i} size={9} color={tm.accentAmber} fill={tm.accentAmber} />
-                    ))}
-                  </div>
+                <div style={{ display: 'flex', gap: '2px', marginBottom: '4px' }}>
+                  {Array.from({ length: hotel.stars }).map((_, i) => (
+                    <Star key={i} size={9} color={tm.accentAmber} fill={tm.accentAmber} />
+                  ))}
                 </div>
                 <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
                   {hotel.name}
@@ -151,15 +153,15 @@ export function HotelOptionCard({ hotels, onSelect }: HotelOptionCardProps) {
               ))}
             </div>
 
-            {/* Reasoning — only on selected recommended */}
+            {/* Reasoning — only on selected */}
             {isSelected && hotel.reasoning && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 style={{
                   marginTop: '10px', padding: '8px 10px',
-                  background: `${tm.accentAmber}10`,
-                  border: `1px solid ${tm.accentAmber}25`,
+                  background: `${violet}10`,
+                  border: `1px solid ${violet}25`,
                   borderRadius: '8px',
                 }}
               >

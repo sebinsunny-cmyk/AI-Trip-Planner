@@ -10,14 +10,168 @@ import { tm, fonts } from '../constants/colors';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const EXAMPLE_TEXT = "I have a meeting in Mumbai on the 15th. Morning flight, back same evening.";
+const EXAMPLE_TEXT  = "I have a meeting in Mumbai on the 15th. Morning flight, back same evening.";
+const EXAMPLE_TEXT_2 = "Book a same day return trip to Leh for Republic Day";
 
-const DETECTED_CHIPS = [
-  { id: 'dest',   label: '📍 Mumbai',         delay: 0   },
-  { id: 'date',   label: '🗓 Apr 15',          delay: 200 },
-  { id: 'flight', label: '🌅 Morning Flight',  delay: 400 },
-  { id: 'return', label: '↩ Same Day Return',  delay: 600 },
-];
+// ─── Intent Parser ────────────────────────────────────────────────────────────
+
+const KNOWN_CITIES: Record<string, string> = {
+  // India
+  'mumbai': 'Mumbai',     'bom': 'Mumbai',        'bombay': 'Mumbai',
+  'delhi': 'Delhi',       'new delhi': 'New Delhi','del': 'Delhi',
+  'bangalore': 'Bangalore','bengaluru': 'Bangalore','blr': 'Bangalore',
+  'hyderabad': 'Hyderabad','hyd': 'Hyderabad',
+  'chennai': 'Chennai',   'madras': 'Chennai',    'maa': 'Chennai',
+  'kochi': 'Kochi',       'cochin': 'Kochi',      'cok': 'Kochi',
+  'pune': 'Pune',         'pnq': 'Pune',
+  'kolkata': 'Kolkata',   'calcutta': 'Kolkata',  'ccu': 'Kolkata',
+  'goa': 'Goa',           'goi': 'Goa',
+  'jaipur': 'Jaipur',     'jai': 'Jaipur',
+  'ahmedabad': 'Ahmedabad','amd': 'Ahmedabad',
+  'chandigarh': 'Chandigarh','ixc': 'Chandigarh',
+  'lucknow': 'Lucknow',   'lko': 'Lucknow',
+  'bhopal': 'Bhopal',     'nag': 'Nagpur',        'nagpur': 'Nagpur',
+  'surat': 'Surat',       'indore': 'Indore',     'idr': 'Indore',
+  'coimbatore': 'Coimbatore','cjb': 'Coimbatore',
+  'vizag': 'Visakhapatnam','vtz': 'Visakhapatnam','visakhapatnam': 'Visakhapatnam',
+  'trivandrum': 'Trivandrum','tvm': 'Trivandrum',  'thiruvananthapuram': 'Trivandrum',
+  'leh': 'Leh',             'ixl': 'Leh',          'ladakh': 'Leh',
+  // International
+  'london': 'London',     'lhr': 'London',
+  'dubai': 'Dubai',       'dxb': 'Dubai',
+  'singapore': 'Singapore','sin': 'Singapore',
+  'new york': 'New York', 'jfk': 'New York',      'nyc': 'New York',
+  'paris': 'Paris',       'cdg': 'Paris',
+  'tokyo': 'Tokyo',       'nrt': 'Tokyo',
+  'bangkok': 'Bangkok',   'bkk': 'Bangkok',
+  'sydney': 'Sydney',     'syd': 'Sydney',
+  'kuala lumpur': 'Kuala Lumpur','kul': 'Kuala Lumpur',
+  'hong kong': 'Hong Kong','hkg': 'Hong Kong',
+};
+
+const HOLIDAY_MAP: Record<string, string> = {
+  'republic day':     'Jan 26',
+  'independence day': 'Aug 15',
+  'gandhi jayanti':   'Oct 2',
+  'new year':         'Jan 1',
+  'christmas':        'Dec 25',
+};
+
+const MONTH_MAP: Record<string, string> = {
+  'january': 'Jan',  'february': 'Feb', 'march': 'Mar',    'april': 'Apr',
+  'may': 'May',      'june': 'Jun',     'july': 'Jul',      'august': 'Aug',
+  'september': 'Sep','october': 'Oct',  'november': 'Nov',  'december': 'Dec',
+  'jan': 'Jan', 'feb': 'Feb', 'mar': 'Mar', 'apr': 'Apr',
+  'jun': 'Jun', 'jul': 'Jul', 'aug': 'Aug', 'sep': 'Sep',
+  'oct': 'Oct', 'nov': 'Nov', 'dec': 'Dec',
+};
+
+interface ParsedIntent {
+  destination: string | null;
+  date: string | null;
+  hasMorning: boolean;
+  hasReturn: boolean;
+}
+
+function getOrdinal(n: number): string {
+  if (n >= 11 && n <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1: return `${n}st`;
+    case 2: return `${n}nd`;
+    case 3: return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
+function parseIntent(text: string): ParsedIntent {
+  const lower = text.toLowerCase();
+  const words = lower.split(/[\s,\.!?;:]+/);
+
+  // ── Destination ──────────────────────────────────────────────────────────
+  let destination: string | null = null;
+
+  // Multi-word cities first ("new delhi", "new york", etc.)
+  for (const [key, val] of Object.entries(KNOWN_CITIES)) {
+    if (key.includes(' ') && lower.includes(key)) {
+      destination = val;
+      break;
+    }
+  }
+  // Single-word cities / airport codes
+  if (!destination) {
+    for (const word of words) {
+      if (KNOWN_CITIES[word]) {
+        destination = KNOWN_CITIES[word];
+        break;
+      }
+    }
+  }
+  // Fallback: "to/in/at/for [Capitalised word]"
+  if (!destination) {
+    const prep = text.match(/\b(?:to|in|at|for)\s+([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]+)?)/);
+    if (prep) destination = prep[1];
+  }
+
+  // ── Date ─────────────────────────────────────────────────────────────────
+  let date: string | null = null;
+
+  // "April 15" / "15th April" / "Apr 15" etc.
+  for (const [monthKey, monthShort] of Object.entries(MONTH_MAP)) {
+    const r1 = new RegExp(`\\b${monthKey}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`);
+    const r2 = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?${monthKey}\\b`);
+    const m1 = lower.match(r1);
+    const m2 = lower.match(r2);
+    if (m1) { date = `${monthShort} ${m1[1]}`; break; }
+    if (m2) { date = `${monthShort} ${m2[1]}`; break; }
+  }
+
+  // "the 15th" / "on the 15" / plain ordinal "15th"
+  if (!date) {
+    const ord = lower.match(/\b(?:the\s+)?(\d{1,2})(st|nd|rd|th)\b/);
+    if (ord) {
+      const n = parseInt(ord[1]);
+      if (n >= 1 && n <= 31) date = getOrdinal(n);
+    }
+  }
+
+  // "this Friday" / "next Monday"
+  if (!date) {
+    const DAY_NAMES = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    for (const day of DAY_NAMES) {
+      if (lower.includes(`next ${day}`)) { date = `Next ${day[0].toUpperCase() + day.slice(1)}`; break; }
+      if (lower.includes(`this ${day}`)) { date = `This ${day[0].toUpperCase() + day.slice(1)}`; break; }
+      if (lower.includes(day))           { date = day[0].toUpperCase() + day.slice(1); break; }
+    }
+  }
+
+  // "tomorrow" / "today"
+  if (!date) {
+    if (lower.includes('tomorrow')) date = 'Tomorrow';
+    else if (lower.includes('today')) date = 'Today';
+  }
+
+  // Named holidays
+  if (!date) {
+    for (const [holidayKey, holidayDate] of Object.entries(HOLIDAY_MAP)) {
+      if (lower.includes(holidayKey)) { date = holidayDate; break; }
+    }
+  }
+
+  // Month alone ("in April", "this April")
+  if (!date) {
+    for (const [monthKey, monthShort] of Object.entries(MONTH_MAP)) {
+      if (new RegExp(`\\b${monthKey}\\b`).test(lower)) {
+        date = monthShort; break;
+      }
+    }
+  }
+
+  // ── Other signals ─────────────────────────────────────────────────────────
+  const hasMorning = /\b(morning|early|6am|7am|8am|9am|dawn|first flight)\b/.test(lower);
+  const hasReturn  = /\b(return|back|same day|same evening|evening flight|coming back|return flight)\b/.test(lower);
+
+  return { destination, date, hasMorning, hasReturn };
+}
 
 const MONTH_NAMES = [
   'January','February','March','April','May','June',
@@ -184,12 +338,12 @@ function buildAssumptionChips(p: TripParams): { label: string }[] {
 
 export function TripIntentScreen() {
   const navigate = useNavigate();
-  const [inputText, setInputText]         = useState('');
-  const [committedText, setCommittedText] = useState('');
-  const [visibleChips, setVisibleChips]   = useState<string[]>([]);
-  const [removedChips, setRemovedChips]   = useState<string[]>([]);
-  const [isRecording, setIsRecording]     = useState(false);
-  const [voiceStatus, setVoiceStatus]     = useState<'idle' | 'listening' | 'done'>('idle');
+  const [inputText, setInputText]           = useState('');
+  const [committedText, setCommittedText]   = useState('');
+  const [isRecording, setIsRecording]       = useState(false);
+  const [voiceStatus, setVoiceStatus]       = useState<'idle' | 'listening' | 'done'>('idle');
+  const [exampleMenuOpen, setExampleMenuOpen] = useState(false);
+  const [selectedExample, setSelectedExample] = useState<1 | 2 | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // ── Preferences sheet state ────────────────────────────────────────────────
@@ -198,19 +352,29 @@ export function TripIntentScreen() {
   const [savedParams, setSavedParams]     = useState<TripParams>(DEFAULT_PARAMS);
   const [prefSheet, setPrefSheet]         = useState<ActiveSheet | null>(null);
 
-  // Chips derive from committedText only
-  useEffect(() => {
-    const words = committedText.toLowerCase();
-    const chips: string[] = [];
-    if (words.includes('mumbai') || words.includes('bom'))                                                          chips.push('dest');
-    if (words.includes('15') || words.includes('april'))                                                            chips.push('date');
-    if (words.includes('morning') || words.includes('early'))                                                       chips.push('flight');
-    if (words.includes('return') || words.includes('back') || words.includes('evening') || words.includes('same')) chips.push('return');
-    setVisibleChips(chips.filter(c => !removedChips.includes(c)));
-  }, [committedText, removedChips]);
+  // ── Intent parsing ────────────────────────────────────────────────────────
+  const parsed: ParsedIntent = committedText.trim()
+    ? parseIntent(committedText)
+    : { destination: null, date: null, hasMorning: false, hasReturn: false };
+
+  const detectedChips = [
+    parsed.destination ? { id: 'dest',   label: `📍 ${parsed.destination}` } : null,
+    parsed.date        ? { id: 'date',   label: `🗓 ${parsed.date}` }         : null,
+    parsed.hasMorning  ? { id: 'flight', label: '🌅 Morning Flight' }         : null,
+    parsed.hasReturn   ? { id: 'return', label: '↩ Same Day Return' }         : null,
+  ].filter(Boolean) as { id: string; label: string }[];
 
   const isDirty   = inputText.trim() !== committedText.trim();
-  const canSubmit = visibleChips.includes('dest') && visibleChips.includes('date');
+  const canSubmit = !!parsed.destination && !!parsed.date;
+
+  const missingMessage =
+    committedText.trim() && !canSubmit
+      ? (!parsed.destination && !parsed.date)
+          ? "Mention a destination and travel date to continue"
+          : !parsed.destination
+            ? "Where are you headed? Mention a city or destination"
+            : "When are you travelling? Mention a date or day"
+      : null;
 
   function commitText() {
     if (!inputText.trim()) return;
@@ -249,7 +413,12 @@ export function TripIntentScreen() {
   }
 
   const handleSubmit = () => {
-    if (canSubmit || inputText.trim()) navigate('/agent-auto', { state: { inputText } });
+    if (!(canSubmit || inputText.trim())) return;
+    if (selectedExample === 2) {
+      navigate('/agent', { state: { mode: 'edge-case' } });
+    } else {
+      navigate('/agent-auto', { state: { inputText } });
+    }
   };
 
   const statusLabel =
@@ -548,10 +717,68 @@ export function TripIntentScreen() {
             style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '15px', color: tm.textPrimary, fontFamily: fonts.body, resize: 'none', lineHeight: 1.6, minHeight: '80px' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
             {!inputText && (
-              <button onClick={() => { setInputText(EXAMPLE_TEXT); setCommittedText(EXAMPLE_TEXT); }}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, fontSize: '12px', color: tm.accentAmber, fontFamily: fonts.mono }}>
-                ↑ Use example
-              </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setExampleMenuOpen(v => !v)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: tm.accentAmber, fontFamily: fonts.mono }}
+                >
+                  ↑ Use example
+                  <motion.span
+                    animate={{ rotate: exampleMenuOpen ? -90 : 90 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ display: 'inline-flex', alignItems: 'center' }}
+                  >
+                    <ChevronRight size={10} color={tm.accentAmber} />
+                  </motion.span>
+                </button>
+
+                <AnimatePresence>
+                  {exampleMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                      style={{
+                        position: 'absolute', bottom: 'calc(100% + 8px)', left: 0,
+                        background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
+                        borderRadius: '14px', overflow: 'hidden', minWidth: '210px',
+                        zIndex: 20, boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
+                      }}
+                    >
+                      {/* Example 1 */}
+                      <motion.button
+                        whileTap={{ backgroundColor: tm.bgElevated }}
+                        onClick={() => {
+                          setInputText(EXAMPLE_TEXT);
+                          setCommittedText(EXAMPLE_TEXT);
+                          setSelectedExample(1);
+                          setExampleMenuOpen(false);
+                        }}
+                        style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '12px 14px', textAlign: 'left', borderBottom: `1px solid ${tm.borderSubtle}` }}
+                      >
+                        <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>Example 1</div>
+                        <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px' }}>Mumbai meeting · happy path</div>
+                      </motion.button>
+
+                      {/* Example 2 */}
+                      <motion.button
+                        whileTap={{ backgroundColor: tm.bgElevated }}
+                        onClick={() => {
+                          setInputText(EXAMPLE_TEXT_2);
+                          setCommittedText(EXAMPLE_TEXT_2);
+                          setSelectedExample(2);
+                          setExampleMenuOpen(false);
+                        }}
+                        style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '12px 14px', textAlign: 'left' }}
+                      >
+                        <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>Example 2</div>
+                        <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px' }}>Leh trip · edge cases</div>
+                      </motion.button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
             <div style={{ flex: 1 }} />
             <AnimatePresence>
@@ -581,7 +808,7 @@ export function TripIntentScreen() {
                   <p style={{ fontSize: '10px', fontFamily: fonts.mono, fontWeight: 600, color: tm.textSecondary, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Detected</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     <AnimatePresence>
-                      {DETECTED_CHIPS.filter(c => visibleChips.includes(c.id)).map(chip => (
+                      {detectedChips.map(chip => (
                         <motion.div key={chip.id} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
                           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                           style={{ display: 'inline-flex', alignItems: 'center', background: `${tm.accentAmber}20`, border: `1px solid ${tm.accentAmber}50`, borderRadius: '20px', padding: '6px 12px' }}>
@@ -589,25 +816,43 @@ export function TripIntentScreen() {
                         </motion.div>
                       ))}
                     </AnimatePresence>
-                    {visibleChips.length === 0 && (
+                    {detectedChips.length === 0 && (
                       <p style={{ fontSize: '12px', color: tm.textSecondary, fontFamily: fonts.mono, margin: 0 }}>No details detected yet</p>
                     )}
                   </div>
                 </div>
 
-                {/* Missing Details */}
-                <div>
-                  <p style={{ fontSize: '10px', fontFamily: fonts.mono, fontWeight: 600, color: tm.textSecondary, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Missing Details</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {buildAssumptionChips(savedParams).map((chip, i) => (
-                      <motion.div key={chip.label} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 25, delay: i * 0.05 }}
-                        style={{ display: 'inline-flex', alignItems: 'center', background: `${tm.accentRed}12`, border: `1px solid ${tm.accentRed}35`, borderRadius: '20px', padding: '6px 12px' }}>
-                        <span style={{ fontSize: '12px', color: tm.accentRed, fontFamily: fonts.mono }}>{chip.label}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
+                {/* Missing details / Assumed preferences */}
+                {(() => {
+                  const allDetected = !!(parsed.destination && parsed.date);
+                  const chips = allDetected
+                    ? buildAssumptionChips(savedParams)
+                    : [
+                        ...(!parsed.destination ? [{ label: '📍 Destination' }] : []),
+                        ...(!parsed.date        ? [{ label: '🗓 Travel date'  }] : []),
+                      ];
+                  return (
+                    <div>
+                      <p style={{ fontSize: '10px', fontFamily: fonts.mono, fontWeight: 600, color: tm.textSecondary, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>
+                        {allDetected ? 'Assumed preferences' : 'Missing details'}
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {chips.map((chip, i) => (
+                          <motion.div key={chip.label} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 25, delay: i * 0.05 }}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center',
+                              background: allDetected ? tm.bgElevated : `${tm.accentRed}12`,
+                              border: `1px solid ${allDetected ? tm.borderSubtle : `${tm.accentRed}35`}`,
+                              borderRadius: '20px', padding: '6px 12px',
+                            }}>
+                            <span style={{ fontSize: '12px', fontFamily: fonts.mono, color: allDetected ? tm.textSecondary : tm.accentRed }}>{chip.label}</span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
               </motion.div>
             ) : (
@@ -632,18 +877,44 @@ export function TripIntentScreen() {
               exit={{ opacity: 0, y: 16 }}
               transition={{ type: 'spring', stiffness: 320, damping: 28 }}
             >
-              <motion.button whileTap={{ scale: 0.97 }} onClick={handleSubmit}
+              {/* Missing info message — above buttons */}
+              <AnimatePresence>
+                {missingMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.2 }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      marginBottom: '10px', padding: '9px 14px',
+                      background: `${tm.accentRed}10`, border: `1px solid ${tm.accentRed}30`,
+                      borderRadius: '12px',
+                    }}
+                  >
+                    <span style={{ fontSize: '11px', color: tm.accentRed, fontFamily: fonts.mono, textAlign: 'center', lineHeight: 1.5 }}>
+                      ⚠ {missingMessage}
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.button
+                whileTap={canSubmit ? { scale: 0.97 } : {}}
+                onClick={canSubmit ? handleSubmit : undefined}
                 style={{
                   width: '100%',
-                  background: tm.accentAmber,
-                  border: `1px solid ${tm.accentAmber}`,
-                  borderRadius: '16px', padding: '13px', cursor: 'pointer',
+                  background: canSubmit ? tm.accentAmber : tm.bgElevated,
+                  border: `1px solid ${canSubmit ? tm.accentAmber : tm.borderSubtle}`,
+                  borderRadius: '16px', padding: '13px',
+                  cursor: canSubmit ? 'pointer' : 'not-allowed',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   transition: 'all 0.3s ease',
-                  boxShadow: `0 4px 18px ${tm.accentAmber}40`,
+                  boxShadow: canSubmit ? `0 4px 18px ${tm.accentAmber}40` : 'none',
+                  opacity: canSubmit ? 1 : 0.5,
                 }}>
-                <span style={{ fontSize: '15px', fontFamily: fonts.heading, fontWeight: 700, color: '#ffffff' }}>Looks Good, Let's Plan</span>
-                <span style={{ fontSize: '15px', color: '#ffffff' }}>→</span>
+                <span style={{ fontSize: '15px', fontFamily: fonts.heading, fontWeight: 700, color: canSubmit ? '#ffffff' : tm.textSecondary }}>Looks Good, Let's Plan</span>
+                <span style={{ fontSize: '15px', color: canSubmit ? '#ffffff' : tm.textSecondary }}>→</span>
               </motion.button>
 
               <motion.button whileTap={{ scale: 0.97 }} onClick={openPrefs}

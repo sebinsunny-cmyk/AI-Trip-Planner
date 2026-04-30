@@ -110,11 +110,11 @@ export function ProfileScreen() {
               Senior Product Manager
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,215,0,0.18)', border: '1px solid rgba(255,215,0,0.35)', borderRadius: '8px', padding: '2px 8px' }}>
-                <span style={{ fontSize: '9px', color: '#FFD700', fontFamily: fonts.mono, letterSpacing: '0.05em' }}>✦ GOLD TIER</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,215,0,0.18)', border: '1px solid rgba(255,215,0,0.35)', borderRadius: '8px', padding: '4px 8px' }}>
+                <span style={{ fontSize: '9px', color: '#FFD700', fontFamily: fonts.mono, letterSpacing: '0.05em', lineHeight: 1 }}>✦ GOLD TIER</span>
               </div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(0,201,167,0.15)', border: '1px solid rgba(0,201,167,0.3)', borderRadius: '8px', padding: '2px 8px' }}>
-                <span style={{ fontSize: '9px', color: '#00C9A7', fontFamily: fonts.mono }}>Pro Plan · Active</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(0,201,167,0.15)', border: '1px solid rgba(0,201,167,0.3)', borderRadius: '8px', padding: '4px 8px' }}>
+                <span style={{ fontSize: '9px', color: '#00C9A7', fontFamily: fonts.mono, lineHeight: 1 }}>Pro Plan · Active</span>
               </div>
             </div>
           </div>

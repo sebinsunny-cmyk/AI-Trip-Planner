@@ -88,6 +88,7 @@ export function MyTripsScreen() {
               onClick={() => setActiveFilter(filter)}
               style={{
                 flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: isActive ? tm.accentAmber : tm.bgSurface,
                 border: `1px solid ${isActive ? tm.accentAmber : tm.borderSubtle}`,
                 borderRadius: '20px',
