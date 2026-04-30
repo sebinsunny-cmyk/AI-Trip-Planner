@@ -127,6 +127,7 @@ function FlightRow({
       {flight.recommended && (
         <div style={{
           position: 'absolute', top: '10px', right: '12px',
+          display: 'inline-flex', alignItems: 'center',
           background: `${accent}20`, border: `1px solid ${accent}50`,
           borderRadius: '20px', padding: '2px 8px',
         }}>
@@ -193,7 +194,7 @@ function FlightRow({
       {insight && (
         <div style={{ marginBottom: '10px' }}>
           <div style={{
-            display: 'inline-block',
+            display: 'inline-flex', alignItems: 'center',
             background: `${insight.color}1A`, border: `1px solid ${insight.color}45`,
             borderRadius: '20px', padding: '2px 9px',
           }}>

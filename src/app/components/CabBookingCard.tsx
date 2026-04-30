@@ -75,6 +75,7 @@ export function CabBookingCard({ cabs, onConfirm }: CabBookingCardProps) {
             </div>
             <div
               style={{
+                display: 'flex', alignItems: 'center',
                 background: tm.bgElevated,
                 border: `1px solid ${tm.borderSubtle}`,
                 borderRadius: '8px',

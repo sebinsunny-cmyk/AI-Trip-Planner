@@ -111,7 +111,7 @@ export function IntegrationDetailScreen() {
             {service.tagline}
           </div>
           <div style={{
-            display: 'inline-block', marginTop: '8px',
+            display: 'inline-flex', alignItems: 'center', marginTop: '8px',
             background: `${service.brand.color}18`,
             border: `1px solid ${service.brand.color}35`,
             borderRadius: '8px', padding: '2px 8px',
