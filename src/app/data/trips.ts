@@ -1,4 +1,4 @@
-export type TripStatus = 'confirmed' | 'Booking in progress' | 'completed';
+export type TripStatus = 'confirmed' | 'Booking in progress' | 'completed' | 'cancelled';
 
 export interface TimelineEntry {
   time: string;

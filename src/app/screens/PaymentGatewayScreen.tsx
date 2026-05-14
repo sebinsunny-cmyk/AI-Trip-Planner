@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ChevronRight, ChevronDown, ChevronUp, X, Check, User, Lock, CreditCard, Landmark, Smartphone, Wallet, Clock } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
+import { ConfirmBackSheet } from '../components/ConfirmBackSheet';
 
 // ─── Razorpay brand colors (fixed, not theme-dependent) ──────────────────────
 const RPZ = {
@@ -161,6 +162,7 @@ export function PaymentGatewayScreen() {
   const [feeSheetOpen,  setFeeSheetOpen]  = useState(false);
   const [paying,        setPaying]        = useState(false);
   const [paid,          setPaid]          = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   function toggleMethod(id: MethodId) {
     setExpanded(prev => prev === id ? null : id);
@@ -187,7 +189,7 @@ export function PaymentGatewayScreen() {
         display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0,
       }}>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => setShowBackConfirm(true)}
           style={{
             width: '32px', height: '32px', borderRadius: '50%',
             background: 'rgba(255,255,255,0.15)', border: 'none',
@@ -502,6 +504,16 @@ export function PaymentGatewayScreen() {
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmBackSheet
+        open={showBackConfirm}
+        title="Leave payment?"
+        message="Your payment details will be lost. You can come back and pay anytime before the booking expires."
+        keepLabel="Stay & pay"
+        exitLabel="Leave"
+        onKeep={() => setShowBackConfirm(false)}
+        onExit={() => { setShowBackConfirm(false); navigate(-1); }}
+      />
 
     </div>
   );

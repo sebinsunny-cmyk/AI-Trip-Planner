@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Minimize2, Plane, Car, Building2 } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
+import { ConfirmBackSheet } from '../components/ConfirmBackSheet';
 import { ProgressRail } from '../components/ProgressRail';
 import { AgentNarrationBubble, NarrationBubble } from '../components/AgentNarrationBubble';
 import { FlightOption } from '../components/FlightOptionCard';
@@ -156,6 +157,7 @@ export function AgentAutoScreen() {
   const [isTyping, setIsTyping]     = useState(false);
   const [showPip, setShowPip]       = useState(false);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
   const { toasts, dismiss } = useReminderToasts();
 
   // Scroll to bottom on new content
@@ -353,7 +355,7 @@ export function AgentAutoScreen() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => setShowBackConfirm(true)}
             style={{
               width: '32px', height: '32px', borderRadius: '50%',
               background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
@@ -432,6 +434,17 @@ export function AgentAutoScreen() {
       </div>
 
       <TripInputBar placeholder="Ask me anything…" />
+
+      <ConfirmBackSheet
+        open={showBackConfirm}
+        title="TripMind is working"
+        message="The agent is actively building your trip. Leaving now may interrupt the booking in progress."
+        keepLabel="Keep waiting"
+        exitLabel="Leave anyway"
+        exitDestructive
+        onKeep={() => setShowBackConfirm(false)}
+        onExit={() => { setShowBackConfirm(false); navigate(-1); }}
+      />
     </div>
   );
 }

@@ -1,15 +1,42 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { Home, FileText, Ticket, Share2 } from 'lucide-react';
+import { Home, FileText, Ticket, Share2, XCircle } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
 import confetti from 'canvas-confetti';
 import { ReminderToastContainer, useReminderToasts, TRIP_REMINDERS } from '../components/ReminderToast';
+import { CancellationPolicySheet } from '../components/CancellationPolicySheet';
+import { CancellationReasonSheet } from '../components/CancellationReasonSheet';
+import { buildRefundBreakdown, type CancelledTripRecord } from '../data/cancellationStore';
+import { TRIP_DETAILS } from '../data/trips';
 
 export function TripConfirmedScreen() {
   const navigate = useNavigate();
   const hasRun = useRef(false);
   const { toasts, add: addToast, dismiss } = useReminderToasts();
+  const [sheet, setSheet] = useState<'policy' | 'reason' | null>(null);
+
+  // Trip 1 is the just-confirmed trip shown on this screen
+  const trip = TRIP_DETAILS['1'];
+  const refundBreakdown = buildRefundBreakdown(trip.expenses);
+  const totalPaid       = trip.expenses.reduce((s, e) => s + e.amount, 0);
+  const totalRefund     = refundBreakdown.filter(i => i.refundable).reduce((s, i) => s + i.amount, 0);
+  const nonRefundable   = totalPaid - totalRefund;
+
+  function handleConfirmCancellation(reason: string) {
+    const record: CancelledTripRecord = {
+      tripId:       '1',
+      cancelledAt:  new Date().toISOString(),
+      reason,
+      refundBreakdown,
+      totalRefund,
+      totalPaid,
+      refundTo:     'Visa ••4211',
+      refundStatus: 'initiated',
+    };
+    setSheet(null);
+    navigate('/cancellation/processing', { state: { record } });
+  }
 
   useEffect(() => {
     if (hasRun.current) return;
@@ -296,6 +323,41 @@ export function TripConfirmedScreen() {
         <Home size={14} color={tm.textSecondary} />
         Back to Home
       </motion.button>
+
+      {/* Cancel booking — subtle link */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.3 }}
+        onClick={() => setSheet('policy')}
+        style={{
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: '5px',
+          padding: '6px 8px', marginTop: '4px',
+        }}
+      >
+        <XCircle size={13} color={tm.accentRed} />
+        <span style={{ fontSize: '12px', fontFamily: fonts.body, color: tm.accentRed }}>
+          Cancel this booking
+        </span>
+      </motion.button>
+
+      {/* ── Sheets ── */}
+      <CancellationPolicySheet
+        open={sheet === 'policy'}
+        tripLabel="COK → BOM · Apr 15"
+        breakdown={refundBreakdown}
+        totalPaid={totalPaid}
+        totalRefund={totalRefund}
+        onCancel={() => setSheet('reason')}
+        onKeep={() => setSheet(null)}
+      />
+      <CancellationReasonSheet
+        open={sheet === 'reason'}
+        nonRefundableAmount={nonRefundable}
+        onConfirm={handleConfirmCancellation}
+        onBack={() => setSheet('policy')}
+      />
     </div>
   );
 }

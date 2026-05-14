@@ -7,6 +7,7 @@ import {
   ChevronRight, ChevronLeft, Check, User, X,
 } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
+import { ConfirmBackSheet } from '../components/ConfirmBackSheet';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -344,6 +345,7 @@ export function TripIntentScreen() {
   const [voiceStatus, setVoiceStatus]       = useState<'idle' | 'listening' | 'done'>('idle');
   const [exampleMenuOpen, setExampleMenuOpen] = useState(false);
   const [selectedExample, setSelectedExample] = useState<1 | 2 | null>(null);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // ── Preferences sheet state ────────────────────────────────────────────────
@@ -645,7 +647,7 @@ export function TripIntentScreen() {
 
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${tm.borderSubtle}`, flexShrink: 0 }}>
-        <button onClick={() => navigate('/')}
+        <button onClick={() => setShowBackConfirm(true)}
           style={{ width: '36px', height: '36px', borderRadius: '50%', background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <ArrowLeft size={16} color={tm.textPrimary} />
         </button>
@@ -1108,6 +1110,15 @@ export function TripIntentScreen() {
         )}
       </AnimatePresence>
 
+      <ConfirmBackSheet
+        open={showBackConfirm}
+        title="Leave trip planning?"
+        message="Your search will be discarded and you'll return to Home."
+        keepLabel="Keep searching"
+        exitLabel="Leave"
+        onKeep={() => setShowBackConfirm(false)}
+        onExit={() => { setShowBackConfirm(false); navigate('/'); }}
+      />
     </div>
   );
 }

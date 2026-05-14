@@ -13,6 +13,7 @@ import indigoLogo from '../../assets/logos/IndiGo-Logo.wine.png';
 import { FlightOption } from '../components/FlightOptionCard';
 import { CabBooking } from '../components/CabBookingCard';
 import { HotelOption } from '../components/HotelOptionCard';
+import { ConfirmBackSheet } from '../components/ConfirmBackSheet';
 
 // ─── Airline helpers ──────────────────────────────────────────────────────────
 
@@ -844,6 +845,7 @@ export function UnifiedReviewScreen() {
   const [selHotel,   setSelHotel]   = useState<HotelOption>(state.selectedHotel);
   const [booking]                   = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [navConfirm, setNavConfirm] = useState<'back' | 'cancel' | null>(null);
   const [totalExpanded, setTotalExpanded] = useState(false);
 
   // Carousel indices
@@ -908,7 +910,7 @@ export function UnifiedReviewScreen() {
         padding: '10px 16px', borderBottom: `1px solid ${tm.borderSubtle}`, flexShrink: 0,
       }}>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => setNavConfirm('back')}
           style={{
             width: '32px', height: '32px', borderRadius: '50%',
             background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
@@ -1467,7 +1469,7 @@ export function UnifiedReviewScreen() {
         <motion.button
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => navigate('/')}
+          onClick={() => setNavConfirm('cancel')}
           style={{
             width: '100%', marginTop: '10px', background: 'transparent',
             border: `1px solid ${tm.borderSubtle}`, borderRadius: '16px', padding: '13px', cursor: 'pointer',
@@ -1481,76 +1483,137 @@ export function UnifiedReviewScreen() {
         </motion.button>
       </div>
 
-      {/* ─── Confirm Booking Modal ─────────────────────────────────────────── */}
+      {/* ─── Payment Summary Bottom Sheet ──────────────────────────────────── */}
       <AnimatePresence>
-        {confirmOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setConfirmOpen(false)}
-              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 80 }}
-            />
-            <div style={{
-              position: 'absolute', inset: 0, zIndex: 81,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '0 16px', pointerEvents: 'none',
-            }}>
+        {confirmOpen && (() => {
+          const CONVENIENCE_FEE = 100;
+          const GST = Math.round(totalPrice * 0.05);
+          const totalCharged = totalPrice + CONVENIENCE_FEE + GST;
+
+          const lineItems: { label: string; amount: number }[] = [
+            ...(selFlight  ? [{ label: `Flight · ${selFlight.airline} (COK→BOM)`,  amount: selFlight.price }]  : []),
+            ...(selReturn  ? [{ label: `Return · ${selReturn.airline} (BOM→COK)`,  amount: selReturn.price }]  : []),
+            ...(selHotel   ? [{ label: `Hotel · ${selHotel.name}`,                  amount: selHotel.pricePerNight }] : []),
+            ...selCabs.map(c => ({ label: `Cab · ${c.provider} (${c.label})`, amount: c.estimatedFare })),
+          ];
+
+          return (
+            <>
+              {/* Backdrop */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: 16 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.92, y: 16 }}
-                transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+                key="pay-backdrop"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setConfirmOpen(false)}
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200 }}
+              />
+
+              {/* Sheet */}
+              <motion.div
+                key="pay-sheet"
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 360, damping: 36 }}
                 style={{
-                  width: '100%',
-                  background: tm.bgSurface, border: `1px solid ${tm.borderSubtle}`,
-                  borderRadius: '24px', padding: '24px 20px',
-                  pointerEvents: 'auto',
+                  position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201,
+                  background: tm.bgSurface,
+                  borderRadius: '24px 24px 0 0',
+                  padding: '0 20px 40px',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-                  <div style={{
-                    width: '52px', height: '52px', borderRadius: '16px',
-                    background: `${tm.accentAmber}18`, border: `1px solid ${tm.accentAmber}35`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Plane size={24} color={tm.accentAmber} />
+                {/* Handle */}
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 6px' }}>
+                  <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: tm.borderSubtle }} />
+                </div>
+
+                {/* Title */}
+                <h3 style={{
+                  fontSize: '16px', fontFamily: fonts.heading, fontWeight: 800,
+                  color: tm.textPrimary, margin: '6px 0 18px',
+                }}>
+                  Payment Summary
+                </h3>
+
+                {/* Line items */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '11px', marginBottom: '16px' }}>
+                  {lineItems.map((item, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontFamily: fonts.body, color: tm.textSecondary, flex: 1, paddingRight: '12px' }}>
+                        {item.label}
+                      </span>
+                      <span style={{ fontSize: '13px', fontFamily: fonts.mono, fontWeight: 500, color: tm.textPrimary, whiteSpace: 'nowrap' }}>
+                        ₹{item.amount.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  ))}
+
+                  {/* Subtotal row */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '13px', fontFamily: fonts.body, color: tm.textSecondary }}>
+                      Trip Total
+                    </span>
+                    <span style={{ fontSize: '13px', fontFamily: fonts.mono, fontWeight: 500, color: tm.textPrimary }}>
+                      ₹{totalPrice.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '13px', fontFamily: fonts.body, color: tm.textSecondary }}>Convenience Fee</span>
+                    <span style={{ fontSize: '13px', fontFamily: fonts.mono, fontWeight: 500, color: tm.textPrimary }}>
+                      ₹{CONVENIENCE_FEE.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '13px', fontFamily: fonts.body, color: tm.textSecondary }}>GST</span>
+                    <span style={{ fontSize: '13px', fontFamily: fonts.mono, fontWeight: 500, color: tm.textPrimary }}>
+                      ₹{GST.toLocaleString('en-IN')}
+                    </span>
                   </div>
                 </div>
-                <h3 style={{ margin: '0 0 8px', textAlign: 'center', fontSize: '17px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary }}>
-                  Confirm your booking?
-                </h3>
-                <p style={{ margin: '0 0 20px', textAlign: 'center', fontSize: '12px', color: tm.textSecondary, fontFamily: fonts.mono, lineHeight: 1.6 }}>
-                  A total of{' '}
-                  <span style={{ color: tm.textPrimary, fontWeight: 700 }}>₹{totalPrice.toLocaleString('en-IN')}</span>{' '}
-                  will be charged. You'll be redirected to the payment gateway to complete your booking.
-                </p>
+
+                {/* Divider */}
+                <div style={{ height: '1px', background: tm.borderSubtle, margin: '0 0 16px' }} />
+
+                {/* Total charged */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '15px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary }}>
+                    Total Charged
+                  </span>
+                  <span style={{ fontSize: '17px', fontFamily: fonts.heading, fontWeight: 800, color: tm.accentAmber }}>
+                    ₹{totalCharged.toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                {/* Pay Now CTA */}
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={handleConfirmBook}
                   style={{
-                    width: '100%', padding: '14px', borderRadius: '14px', border: 'none',
+                    width: '100%', padding: '15px', borderRadius: '16px', border: 'none',
                     background: tm.accentAmber, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                    boxShadow: `0 4px 18px ${tm.accentAmber}40`, marginBottom: '10px',
+                    boxShadow: `0 6px 20px ${tm.accentAmber}45`,
+                    marginBottom: '10px',
                   }}
                 >
-                  <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: '#ffffff' }}>Proceed to Payment</span>
-                  <ChevronRight size={16} color="#ffffff" strokeWidth={2.5} />
+                  <span style={{ fontSize: '15px', fontFamily: fonts.heading, fontWeight: 800, color: '#ffffff' }}>
+                    Pay Now
+                  </span>
+                  <ArrowRight size={16} color="#ffffff" strokeWidth={2.5} />
                 </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setConfirmOpen(false)}
-                  style={{
-                    width: '100%', padding: '12px', borderRadius: '14px', cursor: 'pointer',
-                    background: 'transparent', border: `1px solid ${tm.borderSubtle}`,
-                  }}
-                >
-                  <span style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 600, color: tm.textSecondary }}>Go Back</span>
-                </motion.button>
+
+                {/* Security note */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                  <ShieldCheck size={12} color={tm.textSecondary} />
+                  <span style={{ fontSize: '11px', fontFamily: fonts.mono, color: tm.textSecondary }}>
+                    Secured by PhonePe
+                  </span>
+                </div>
               </motion.div>
-            </div>
-          </>
-        )}
+            </>
+          );
+        })()}
       </AnimatePresence>
 
       {/* ─── Bottom Sheets ─────────────────────────────────────────────────── */}
@@ -1708,6 +1771,29 @@ export function UnifiedReviewScreen() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Back confirmation ── */}
+      <ConfirmBackSheet
+        open={navConfirm === 'back'}
+        title="Go back to search?"
+        message="Your reviewed options will be lost and you'll return to the previous step."
+        keepLabel="Keep reviewing"
+        exitLabel="Go back"
+        onKeep={() => setNavConfirm(null)}
+        onExit={() => { setNavConfirm(null); navigate(-1); }}
+      />
+
+      {/* ── Cancel confirmation ── */}
+      <ConfirmBackSheet
+        open={navConfirm === 'cancel'}
+        title="Cancel trip planning?"
+        message="This will discard all your selected options and return you to Home."
+        keepLabel="Keep planning"
+        exitLabel="Cancel trip"
+        exitDestructive
+        onKeep={() => setNavConfirm(null)}
+        onExit={() => { setNavConfirm(null); navigate('/'); }}
+      />
 
     </div>
   );
