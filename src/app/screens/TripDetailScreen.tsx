@@ -5,8 +5,15 @@ import {
   ChevronLeft, Plane, Check, Clock, MapPin,
   Share2, Download, AlertCircle, Leaf, Copy,
   CheckCircle2, Hourglass, FileCheck, Sparkles,
-  Star, Wifi, Coffee, Car, Building2, CreditCard,
+  Star, Wifi, Coffee, Car, Building2, CreditCard, XCircle,
 } from 'lucide-react';
+import { CancellationPolicySheet } from '../components/CancellationPolicySheet';
+import { CancellationReasonSheet } from '../components/CancellationReasonSheet';
+import { RefundStatusTracker } from '../components/RefundStatusTracker';
+import {
+  getCancellation, buildRefundBreakdown, isTripCancelled,
+  type CancelledTripRecord,
+} from '../data/cancellationStore';
 import { tm, fonts } from '../constants/colors';
 import type { TripDetail, FlightLeg, TripStatus, HotelEntry } from '../data/trips';
 import { TRIP_DETAILS } from '../data/trips';
@@ -1135,11 +1142,16 @@ function DetailsTab({ trip }: { trip: TripDetail }) {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export function TripDetailScreen() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { id }       = useParams<{ id: string }>();
+  const navigate     = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('Itinerary');
+  const [sheet, setSheet] = useState<'policy' | 'reason' | null>(null);
 
   const trip: TripDetail | undefined = id != null ? TRIP_DETAILS[id] : undefined;
+
+  // Cancellation state (from localStorage)
+  const cancelled     = id ? getCancellation(id) : null;
+  const isCancelled   = id ? isTripCancelled(id) : false;
 
   useEffect(() => {
     if (trip?.status === 'Booking in progress') {
@@ -1171,15 +1183,148 @@ export function TripDetailScreen() {
     );
   }
 
+  // Refund computation (used for policy sheet and cancel handler)
+  const refundBreakdown = buildRefundBreakdown(trip.expenses);
+  const totalPaid       = trip.expenses.reduce((s, e) => s + e.amount, 0);
+  const totalRefund     = refundBreakdown.filter(i => i.refundable).reduce((s, i) => s + i.amount, 0);
+  const nonRefundable   = totalPaid - totalRefund;
+
+  function handleConfirmCancellation(reason: string) {
+    const record: CancelledTripRecord = {
+      tripId:          trip.id,
+      cancelledAt:     new Date().toISOString(),
+      reason,
+      refundBreakdown,
+      totalRefund,
+      totalPaid,
+      refundTo:        'Visa ••4211',
+      refundStatus:    'initiated',
+    };
+    setSheet(null);
+    navigate('/cancellation/processing', { state: { record } });
+  }
+
+  const showCancelButton = trip.status === 'confirmed' && !isCancelled;
+
   return (
     <div style={{ background: tm.bgPrimary, fontFamily: fonts.body, display: 'flex', flexDirection: 'column' }}>
       <HeroHeader trip={trip} onBack={() => navigate('/trips')} />
       <TabBar status={trip.status} active={activeTab} onChange={setActiveTab} />
-      <div style={{ padding: '14px 14px 40px' }}>
+
+      <div style={{ padding: '14px 14px', paddingBottom: showCancelButton ? '100px' : '40px' }}>
+
+        {/* ── Cancelled banner ── */}
+        {isCancelled && cancelled && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: `${tm.accentRed}0A`, border: `1px solid ${tm.accentRed}30`,
+              borderRadius: '14px', marginBottom: '14px', overflow: 'hidden',
+            }}
+          >
+            {/* Top row — status + date */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px 10px' }}>
+              <XCircle size={15} color={tm.accentRed} style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '12px', fontFamily: fonts.heading, fontWeight: 700, color: tm.accentRed }}>
+                  Trip Cancelled
+                </div>
+                <div style={{ fontSize: '10px', fontFamily: fonts.mono, color: tm.textSecondary, marginTop: '1px' }}>
+                  Cancelled on {new Date(cancelled.cancelledAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+              </div>
+            </div>
+
+            {/* Refund amount row */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 14px',
+              borderTop: `1px solid ${tm.accentRed}20`,
+              borderBottom: `1px solid ${tm.accentRed}20`,
+              background: `${tm.accentTeal}08`,
+            }}>
+              <div>
+                <div style={{ fontSize: '10px', fontFamily: fonts.mono, color: tm.textSecondary, marginBottom: '2px' }}>
+                  REFUND AMOUNT
+                </div>
+                <div style={{ fontSize: '20px', fontFamily: fonts.heading, fontWeight: 800, color: tm.accentTeal }}>
+                  ₹{cancelled.totalRefund.toLocaleString()}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '10px', fontFamily: fonts.mono, color: tm.textSecondary, marginBottom: '2px' }}>
+                  TO
+                </div>
+                <div style={{ fontSize: '12px', fontFamily: fonts.mono, fontWeight: 600, color: tm.textPrimary }}>
+                  💳 Visa ••4211
+                </div>
+                <div style={{ fontSize: '10px', fontFamily: fonts.mono, color: tm.textSecondary, marginTop: '2px' }}>
+                  5–7 business days
+                </div>
+              </div>
+            </div>
+
+            {/* Refund status tracker */}
+            <div style={{ padding: '4px 14px 12px' }}>
+              <RefundStatusTracker
+                tripId={cancelled.tripId}
+                refundStatus={cancelled.refundStatus}
+                autoAdvance
+                compact
+              />
+            </div>
+          </motion.div>
+        )}
+
         {activeTab === 'Itinerary' && <ItineraryTab trip={trip} />}
-        {activeTab === 'Expenses' && <ExpensesTab trip={trip} />}
-        {activeTab === 'Details' && <DetailsTab trip={trip} />}
+        {activeTab === 'Expenses'  && <ExpensesTab  trip={trip} />}
+        {activeTab === 'Details'   && <DetailsTab   trip={trip} />}
       </div>
+
+      {/* ── Cancel Booking footer (confirmed trips only) ── */}
+      {showCancelButton && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          padding: '12px 16px 28px',
+          background: `linear-gradient(to top, ${tm.bgPrimary} 70%, transparent)`,
+          zIndex: 10,
+        }}>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setSheet('policy')}
+            style={{
+              width: '100%', padding: '13px', borderRadius: '14px',
+              border: `1px solid ${tm.accentRed}35`,
+              background: `${tm.accentRed}08`,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            }}
+          >
+            <XCircle size={15} color={tm.accentRed} />
+            <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 600, color: tm.accentRed }}>
+              Cancel Booking
+            </span>
+          </motion.button>
+        </div>
+      )}
+
+      {/* ── Sheets ── */}
+      <CancellationPolicySheet
+        open={sheet === 'policy'}
+        tripLabel={`${trip.from} → ${trip.to} · ${trip.date}`}
+        breakdown={refundBreakdown}
+        totalPaid={totalPaid}
+        totalRefund={totalRefund}
+        onCancel={() => setSheet('reason')}
+        onKeep={() => setSheet(null)}
+      />
+      <CancellationReasonSheet
+        open={sheet === 'reason'}
+        nonRefundableAmount={nonRefundable}
+        onConfirm={handleConfirmCancellation}
+        onBack={() => setSheet('policy')}
+      />
     </div>
   );
 }

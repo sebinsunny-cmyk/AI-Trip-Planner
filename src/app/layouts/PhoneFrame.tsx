@@ -45,6 +45,9 @@ export function PhoneFrame() {
           borderRadius: '48px',
           overflow: 'hidden',
           position: 'relative',
+          // transform creates a new containing block for position:fixed children
+          // so sheets and sticky footers stay inside the phone frame
+          transform: 'translateZ(0)',
           border: shellBorder,
           boxShadow: shellShadow,
           display: 'flex',

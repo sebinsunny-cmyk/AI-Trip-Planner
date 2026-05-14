@@ -26,6 +26,8 @@ import { OnboardingPermissionsScreen } from './screens/OnboardingPermissionsScre
 import { OnboardingAllSetScreen } from './screens/OnboardingAllSetScreen';
 import { IntegrationDetailScreen } from './screens/IntegrationDetailScreen';
 import { IntegrationConnectScreen } from './screens/IntegrationConnectScreen';
+import { CancellationProcessingScreen } from './screens/CancellationProcessingScreen';
+import { CancellationConfirmedScreen } from './screens/CancellationConfirmedScreen';
 
 export const router = createBrowserRouter([
   {
@@ -54,6 +56,8 @@ export const router = createBrowserRouter([
           { path: 'settings/integrations/:serviceId/connect', Component: IntegrationConnectScreen },
           { path: 'notifications', Component: NotificationsScreen },
           { path: 'profile', Component: ProfileScreen },
+          { path: 'cancellation/processing', Component: CancellationProcessingScreen },
+          { path: 'cancellation/confirmed',  Component: CancellationConfirmedScreen  },
 
           // Onboarding flow — Nova-led, protected (user must be signed in)
           // welcome → tour → name → contact → location → prefs-flight → prefs-hotel → permissions → all-set

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Settings, Minimize2, Plane, Car, Building2, CalendarDays, CreditCard, ClipboardList, RotateCcw, Ban, Wallet } from 'lucide-react';
 import { tm, fonts } from '../constants/colors';
+import { ConfirmBackSheet } from '../components/ConfirmBackSheet';
 import { ProgressRail } from '../components/ProgressRail';
 import { AgentNarrationBubble, NarrationBubble } from '../components/AgentNarrationBubble';
 import { FlightOptionCard, FlightOption } from '../components/FlightOptionCard';
@@ -462,6 +463,7 @@ export function AgentLiveScreen() {
     | null
   >('flights');
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
   const { toasts, add: addToast, dismiss: dismissToast } = useReminderToasts();
 
   // Edge-case user choices
@@ -984,7 +986,7 @@ export function AgentLiveScreen() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => setShowBackConfirm(true)}
             style={{
               width: '32px',
               height: '32px',
@@ -1169,6 +1171,17 @@ export function AgentLiveScreen() {
         placeholder="Ask me anything..."
         chips={edgeCaseMode && isGateActive && !isTyping ? EDGE_CASE_CHIPS[currentStep] : undefined}
         onGateSubmit={edgeCaseMode && isGateActive && !isTyping ? val => handleEdgeCaseChoice(currentStep, val) : undefined}
+      />
+
+      <ConfirmBackSheet
+        open={showBackConfirm}
+        title="Leave the agent session?"
+        message="TripMind is actively working on your trip. Leaving now will end this session."
+        keepLabel="Stay with agent"
+        exitLabel="Leave anyway"
+        exitDestructive
+        onKeep={() => setShowBackConfirm(false)}
+        onExit={() => { setShowBackConfirm(false); navigate('/'); }}
       />
     </div>
   );
