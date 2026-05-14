@@ -19,18 +19,18 @@ const hotelMeeting = '/hotels/hotels-meeting.jpg';
 export const AUTO_FLIGHTS: FlightOption[] = [
   {
     id: 'f1', airline: 'IndiGo', airlineCode: '6E', flightNumber: '6E-342',
-    departure: '6:20', arrival: '8:10', duration: '1h 50m', stops: 0,
+    departure: '06:20', arrival: '08:10', duration: '1h 50m', stops: 0,
     price: 4850, carbonKg: 82, recommended: true,
-    reasoning: 'Gets you to Mumbai at 8:10 AM — nearly 6 hours before your 2 PM meeting. Non-stop, lowest carbon, best value.',
+    reasoning: 'Gets you to Mumbai at 08:10 — nearly 6 hours before your 14:00 meeting. Non-stop, lowest carbon, best value.',
   },
   {
     id: 'f2', airline: 'Air India', airlineCode: 'AI', flightNumber: 'AI-612',
-    departure: '7:05', arrival: '9:00', duration: '1h 55m', stops: 0,
+    departure: '07:05', arrival: '09:00', duration: '1h 55m', stops: 0,
     price: 5400, carbonKg: 91,
   },
   {
     id: 'f3', airline: 'Vistara', airlineCode: 'UK', flightNumber: 'UK-844',
-    departure: '8:30', arrival: '10:25', duration: '1h 55m', stops: 0,
+    departure: '08:30', arrival: '10:25', duration: '1h 55m', stops: 0,
     price: 6200, carbonKg: 89,
   },
 ];
@@ -38,18 +38,18 @@ export const AUTO_FLIGHTS: FlightOption[] = [
 export const AUTO_RETURN_FLIGHTS: FlightOption[] = [
   {
     id: 'r1', airline: 'IndiGo', airlineCode: '6E', flightNumber: '6E-351',
-    departure: '7:15 PM', arrival: '9:00 PM', duration: '1h 45m', stops: 0,
+    departure: '19:15', arrival: '21:00', duration: '1h 45m', stops: 0,
     price: 4650, carbonKg: 79, recommended: true,
-    reasoning: 'Departs 3 hours after your meeting ends — comfortable buffer. Arrives Kochi by 9 PM.',
+    reasoning: 'Departs 3 hours after your meeting ends — comfortable buffer. Arrives Kochi by 21:00.',
   },
   {
     id: 'r2', airline: 'Air India', airlineCode: 'AI', flightNumber: 'AI-619',
-    departure: '8:30 PM', arrival: '10:15 PM', duration: '1h 45m', stops: 0,
+    departure: '20:30', arrival: '22:15', duration: '1h 45m', stops: 0,
     price: 5200, carbonKg: 86,
   },
   {
     id: 'r3', airline: 'Vistara', airlineCode: 'UK', flightNumber: 'UK-857',
-    departure: '6:00 PM', arrival: '7:45 PM', duration: '1h 45m', stops: 0,
+    departure: '18:00', arrival: '19:45', duration: '1h 45m', stops: 0,
     price: 5900, carbonKg: 84,
   },
 ];
@@ -228,6 +228,8 @@ export function AgentAutoScreen() {
               allReturnFlights:     AUTO_RETURN_FLIGHTS,
               allCabs:              AUTO_CABS,
               allHotels:            AUTO_HOTELS,
+              outboundDate:         'Apr 15',
+              returnDate:           'Apr 15',
             },
           });
         }, 600);

@@ -783,16 +783,48 @@ export function TripIntentScreen() {
               </div>
             )}
             <div style={{ flex: 1 }} />
-            <AnimatePresence>
-              {isDirty && (
-                <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ type: 'spring', stiffness: 360, damping: 26 }} whileTap={{ scale: 0.93 }}
-                  onClick={commitText} onKeyDown={e => e.key === 'Enter' && commitText()}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: tm.accentAmber, border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer' }}>
-                  <SendHorizonal size={13} color="#ffffff" />
-                </motion.button>
-              )}
-            </AnimatePresence>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {/* Clear button — visible whenever there is text */}
+              <AnimatePresence>
+                {inputText && (
+                  <motion.button
+                    key="clear"
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.7 }}
+                    transition={{ type: 'spring', stiffness: 360, damping: 26 }}
+                    whileTap={{ scale: 0.88 }}
+                    onClick={() => {
+                      setInputText('');
+                      setCommittedText('');
+                      setSelectedExample(null);
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: tm.bgElevated,
+                      border: `1px solid ${tm.borderSubtle}`,
+                      borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer',
+                    }}
+                  >
+                    <X size={12} color={tm.textSecondary} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              {/* Send button — visible when text is uncommitted */}
+              <AnimatePresence>
+                {isDirty && (
+                  <motion.button
+                    key="send"
+                    initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ type: 'spring', stiffness: 360, damping: 26 }} whileTap={{ scale: 0.93 }}
+                    onClick={commitText} onKeyDown={e => e.key === 'Enter' && commitText()}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: tm.accentAmber, border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer' }}>
+                    <SendHorizonal size={13} color="#ffffff" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
