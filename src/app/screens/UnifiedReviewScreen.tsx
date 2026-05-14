@@ -118,52 +118,100 @@ function CarouselDots({
   );
 }
 
+// ─── 24-hour time normaliser ─────────────────────────────────────────────────
+function to24h(time: string): string {
+  const m = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (m) {
+    let h = parseInt(m[1], 10);
+    const period = m[3].toUpperCase();
+    if (period === 'AM' && h === 12) h = 0;
+    if (period === 'PM' && h !== 12) h += 12;
+    return `${String(h).padStart(2, '0')}:${m[2]}`;
+  }
+  // Already 24h — just zero-pad single-digit hours
+  const plain = time.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (plain) return `${plain[1].padStart(2, '0')}:${plain[2]}`;
+  return time;
+}
+
 // ─── Compact summary rows (collapsed state) ───────────────────────────────────
 
 function FlightCompactRow({
-  flight, origin, destination, label, accent, isReturn = false,
-}: { flight: FlightOption; origin: string; destination: string; label: string; accent: string; isReturn?: boolean }) {
+  flight, origin, destination, label, accent, isReturn = false, date,
+}: { flight: FlightOption; origin: string; destination: string; label: string; accent: string; isReturn?: boolean; date?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      {/* Airline logo */}
-      <div style={{
-        width: '32px', height: '32px', borderRadius: '8px',
-        background: AIRLINE_COLORS[flight.airline] || tm.bgElevated,
-        overflow: 'hidden', flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <AirlineIcon airline={flight.airline} size={32} />
-      </div>
-      {/* Route */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-          <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary }}>
-            {flight.departure}
+    <div>
+      {/* ── Main row: logo + times + price, all center-aligned ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '3px' }}>
+
+        {/* Airline logo — vertically centered against the center column */}
+        <div style={{
+          width: '34px', height: '34px', borderRadius: '9px', flexShrink: 0,
+          background: AIRLINE_COLORS[flight.airline] || tm.bgElevated,
+          overflow: 'hidden',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <AirlineIcon airline={flight.airline} size={34} />
+        </div>
+
+        {/* Departure — time / date / airport code stacked */}
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ fontSize: '16px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary, lineHeight: 1 }}>
+            {to24h(flight.departure)}
+          </div>
+          {date && (
+            <div style={{ fontSize: '9px', fontFamily: fonts.mono, fontWeight: 700, color: accent, marginTop: '2px' }}>
+              {date}
+            </div>
+          )}
+          <div style={{ fontSize: '10px', fontFamily: fonts.mono, color: tm.textSecondary, marginTop: '2px' }}>
+            {origin}
+          </div>
+        </div>
+
+        {/* Centre column: label → line+icon → duration */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <span style={{
+            fontSize: '9px', fontFamily: fonts.mono, fontWeight: 700,
+            color: accent, letterSpacing: '0.08em',
+            textTransform: 'uppercase' as const, lineHeight: 1,
+          }}>
+            {label}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '4px' }}>
             <div style={{ flex: 1, height: '1px', background: tm.borderSubtle }} />
             {isReturn
-              ? <ArrowLeft size={9} color={accent} />
-              : <Plane size={9} color={accent} />
+              ? <ArrowLeft size={10} color={accent} />
+              : <Plane size={10} color={accent} />
             }
             <div style={{ flex: 1, height: '1px', background: tm.borderSubtle }} />
           </div>
-          <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary }}>
-            {flight.arrival}
+          <span style={{ fontSize: '9px', fontFamily: fonts.mono, color: tm.textSecondary, lineHeight: 1 }}>
+            {flight.duration}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>{label}</span>
-          <span style={{ fontSize: '10px', color: tm.borderSubtle }}>·</span>
-          <span style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>{flight.airline}</span>
-          <span style={{ fontSize: '10px', color: tm.borderSubtle }}>·</span>
-          <span style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>{flight.duration}</span>
+
+        {/* Arrival — time / date / airport code stacked */}
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ fontSize: '16px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary, lineHeight: 1 }}>
+            {to24h(flight.arrival)}
+          </div>
+          {date && (
+            <div style={{ fontSize: '9px', fontFamily: fonts.mono, fontWeight: 700, color: accent, marginTop: '2px' }}>
+              {date}
+            </div>
+          )}
+          <div style={{ fontSize: '10px', fontFamily: fonts.mono, color: tm.textSecondary, marginTop: '2px' }}>
+            {destination}
+          </div>
         </div>
+
+        {/* Price */}
+        <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary, flexShrink: 0 }}>
+          ₹{flight.price.toLocaleString()}
+        </span>
+
       </div>
-      {/* Price */}
-      <span style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary, flexShrink: 0 }}>
-        ₹{flight.price.toLocaleString()}
-      </span>
     </div>
   );
 }
@@ -200,8 +248,9 @@ function CabCompactRow({ cab }: { cab: CabBooking }) {
   );
 }
 
-function HotelCompactRow({ hotel }: { hotel: HotelOption | undefined }) {
+function HotelCompactRow({ hotel, outboundDate, returnDate }: { hotel: HotelOption | undefined; outboundDate?: string; returnDate?: string }) {
   if (!hotel) return null;
+  const violet = '#A78BFA';
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
       {/* Thumbnail */}
@@ -218,12 +267,12 @@ function HotelCompactRow({ hotel }: { hotel: HotelOption | undefined }) {
           }}><Building2 size={22} color="#ffffff" opacity={0.7} /></div>
         )}
       </div>
-      {/* Name + stars + distance */}
+      {/* Name + stars + distance + dates */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary, marginBottom: '4px' }}>
           {hotel.name}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
           <div style={{ display: 'flex', gap: '1px' }}>
             {Array.from({ length: hotel.stars }).map((_, i) => (
               <Star key={i} size={8} color={tm.accentAmber} fill={tm.accentAmber} />
@@ -236,6 +285,14 @@ function HotelCompactRow({ hotel }: { hotel: HotelOption | undefined }) {
             </span>
           </div>
         </div>
+        {(outboundDate || returnDate) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <CalendarClock size={9} color={violet} />
+            <span style={{ fontSize: '10px', fontFamily: fonts.mono, fontWeight: 700, color: violet }}>{outboundDate}</span>
+            <ArrowRight size={9} color={tm.textSecondary} />
+            <span style={{ fontSize: '10px', fontFamily: fonts.mono, fontWeight: 700, color: violet }}>{returnDate}</span>
+          </div>
+        )}
       </div>
       {/* Price */}
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -269,8 +326,8 @@ function EditButton({ onPress, accent }: { onPress: () => void; accent: string }
 // ─── Flight summary row (expanded state) ─────────────────────────────────────
 
 function FlightSummaryRow({
-  label, flight, origin, destination, accent, allFlights = [], onEdit, isReturn = false, hideChip = false, cardBg, alwaysOpen = false,
-}: { label: string; flight: FlightOption; origin: string; destination: string; accent: string; allFlights?: FlightOption[]; onEdit?: () => void; isReturn?: boolean; hideChip?: boolean; cardBg?: string; alwaysOpen?: boolean }) {
+  label, flight, origin, destination, accent, allFlights = [], onEdit, isReturn = false, hideChip = false, cardBg, alwaysOpen = false, date,
+}: { label: string; flight: FlightOption; origin: string; destination: string; accent: string; allFlights?: FlightOption[]; onEdit?: () => void; isReturn?: boolean; hideChip?: boolean; cardBg?: string; alwaysOpen?: boolean; date?: string }) {
   const insight = getFlightInsight(flight, allFlights);
   const [expanded, setExpanded] = useState(false);
   const isOpen = alwaysOpen || expanded;
@@ -343,11 +400,16 @@ function FlightSummaryRow({
 
         {/* Route times */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ textAlign: 'center', minWidth: '40px' }}>
+          <div style={{ textAlign: 'center', minWidth: '44px' }}>
             <div style={{ fontSize: '16px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary, lineHeight: 1 }}>
-              {flight.departure}
+              {to24h(flight.departure)}
             </div>
-            <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '3px' }}>{origin}</div>
+            {date && (
+              <div style={{ fontSize: '9px', color: accent, fontFamily: fonts.mono, fontWeight: 700, marginTop: '2px' }}>
+                {date}
+              </div>
+            )}
+            <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px' }}>{origin}</div>
           </div>
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginBottom: '4px' }}>
@@ -362,11 +424,16 @@ function FlightSummaryRow({
               {flight.stops === 0 ? 'Non-stop' : `${flight.stops} stop`}
             </div>
           </div>
-          <div style={{ textAlign: 'center', minWidth: '40px' }}>
+          <div style={{ textAlign: 'center', minWidth: '44px' }}>
             <div style={{ fontSize: '16px', fontFamily: fonts.heading, fontWeight: 800, color: tm.textPrimary, lineHeight: 1 }}>
-              {flight.arrival}
+              {to24h(flight.arrival)}
             </div>
-            <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '3px' }}>{destination}</div>
+            {date && (
+              <div style={{ fontSize: '9px', color: accent, fontFamily: fonts.mono, fontWeight: 700, marginTop: '2px' }}>
+                {date}
+              </div>
+            )}
+            <div style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono, marginTop: '2px' }}>{destination}</div>
           </div>
         </div>
 
@@ -839,6 +906,9 @@ export function UnifiedReviewScreen() {
   const allCabs:          CabBooking[]   = state.allCabs          ?? [];
   const allHotels:        HotelOption[]  = state.allHotels        ?? [];
 
+  const outboundDate: string = state.outboundDate ?? 'Apr 15';
+  const returnDate:   string = state.returnDate   ?? 'Apr 15';
+
   const [selFlight,  setSelFlight]  = useState<FlightOption>(state.selectedFlight);
   const [selReturn,  setSelReturn]  = useState<FlightOption>(state.selectedReturnFlight);
   const [selCabs,    setSelCabs]    = useState<CabBooking[]>(state.selectedCabs ?? []);
@@ -940,7 +1010,7 @@ export function UnifiedReviewScreen() {
             background: isDark ? '#3B82F60A' : '#EFF6FF',
             border: '1px solid #3B82F630',
             borderRadius: '20px',
-            padding: '14px 16px 12px',
+            padding: '14px 16px 18px',
             marginBottom: '12px',
           }}
         >
@@ -990,15 +1060,15 @@ export function UnifiedReviewScreen() {
                 {selFlight && (
                   <FlightCompactRow
                     flight={selFlight} origin="COK" destination="BOM"
-                    label="Outbound" accent={tm.accentAmber}
+                    label="Outbound" accent={tm.accentAmber} date={outboundDate}
                   />
                 )}
                 {selReturn && (
                   <>
-                    <div style={{ height: '1px', background: tm.borderSubtle, margin: '12px 0' }} />
+                    <div style={{ height: '1px', background: tm.borderSubtle, margin: '16px 0' }} />
                     <FlightCompactRow
                       flight={selReturn} origin="BOM" destination="COK"
-                      label="Return" accent={tm.accentTeal} isReturn
+                      label="Return" accent={tm.accentTeal} isReturn date={returnDate}
                     />
                   </>
                 )}
@@ -1035,6 +1105,7 @@ export function UnifiedReviewScreen() {
                         accent={tm.accentAmber} allFlights={allFlights}
                         onEdit={() => openSheet('flight-out')} hideChip alwaysOpen
                         cardBg={isDark ? tm.bgElevated : '#EFF6FF80'}
+                        date={outboundDate}
                       />
                     </motion.div>
                   ) : (
@@ -1044,6 +1115,7 @@ export function UnifiedReviewScreen() {
                         accent={tm.accentTeal} allFlights={allReturnFlights}
                         onEdit={() => openSheet('flight-ret')} isReturn hideChip alwaysOpen
                         cardBg={isDark ? tm.bgElevated : '#EFF6FF80'}
+                        date={returnDate}
                       />
                     </motion.div>
                   )}
@@ -1169,9 +1241,19 @@ export function UnifiedReviewScreen() {
                         <div style={{ width: '5px', height: '5px', borderRadius: '2px', background: tm.accentTeal }} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '12px', color: tm.textPrimary, fontFamily: fonts.body, marginBottom: '8px' }}>
-                          {selCabs[cabIndex].pickupLocation}
-                          <span style={{ color: tm.textSecondary }}> · {selCabs[cabIndex].pickupTime}</span>
+                        <div style={{ marginBottom: '8px' }}>
+                          <div style={{ fontSize: '12px', color: tm.textPrimary, fontFamily: fonts.body }}>
+                            {selCabs[cabIndex].pickupLocation}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
+                            <span style={{ fontSize: '10px', fontFamily: fonts.mono, color: tm.textSecondary }}>
+                              {selCabs[cabIndex].pickupTime}
+                            </span>
+                            <span style={{ fontSize: '10px', color: tm.borderSubtle }}>·</span>
+                            <span style={{ fontSize: '10px', fontFamily: fonts.mono, fontWeight: 700, color: tm.accentTeal }}>
+                              {outboundDate}
+                            </span>
+                          </div>
                         </div>
                         <div style={{ fontSize: '12px', color: tm.textPrimary, fontFamily: fonts.body }}>
                           {selCabs[cabIndex].dropLocation}
@@ -1244,7 +1326,7 @@ export function UnifiedReviewScreen() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
-                <HotelCompactRow hotel={selHotel} />
+                <HotelCompactRow hotel={selHotel} outboundDate={outboundDate} returnDate={returnDate} />
               </motion.div>
             ) : (
               /* ── Expanded: full hotel card ── */
@@ -1358,6 +1440,27 @@ export function UnifiedReviewScreen() {
                         </p>
                       </div>
                     )}
+
+                    {/* Check-in / Check-out */}
+                    <div style={{
+                      marginTop: '14px', padding: '12px 14px',
+                      background: `${violet}0C`, border: `1px solid ${violet}30`,
+                      borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                        <span style={{ fontSize: '9px', color: tm.textSecondary, fontFamily: fonts.mono, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>Check-in</span>
+                        <span style={{ fontSize: '14px', fontFamily: fonts.mono, fontWeight: 800, color: violet }}>{outboundDate}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ width: '18px', height: '1px', background: `${violet}50` }} />
+                        <CalendarClock size={13} color={violet} />
+                        <div style={{ width: '18px', height: '1px', background: `${violet}50` }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                        <span style={{ fontSize: '9px', color: tm.textSecondary, fontFamily: fonts.mono, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>Check-out</span>
+                        <span style={{ fontSize: '14px', fontFamily: fonts.mono, fontWeight: 800, color: violet }}>{returnDate}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
