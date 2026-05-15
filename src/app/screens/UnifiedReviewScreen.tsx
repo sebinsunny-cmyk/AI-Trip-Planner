@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -927,6 +927,28 @@ export function UnifiedReviewScreen() {
   const [cabSectionExpanded,   setCabSectionExpanded]   = useState(false);
   const [hotelSectionExpanded, setHotelSectionExpanded] = useState(false);
 
+  // ── Countdown timer (10 min lock) ────────────────────────────────────────
+  const LOCK_SECONDS = 600;
+  const [secondsLeft, setSecondsLeft] = useState(LOCK_SECONDS);
+  const [timerExpired, setTimerExpired] = useState(false);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) { setTimerExpired(true); return; }
+    const id = setInterval(() => setSecondsLeft(s => s - 1), 1000);
+    return () => clearInterval(id);
+  }, [secondsLeft]);
+
+  function timerColor(): string {
+    if (secondsLeft > 240) return tm.accentTeal;
+    if (secondsLeft > 120) return tm.accentAmber;
+    return '#EF4444';
+  }
+  function timerLabel(): string {
+    const m = Math.floor(secondsLeft / 60);
+    const s = secondsLeft % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
   // Sheet visibility
   const [sheetOpen, setSheetOpen] = useState<'flight-out' | 'flight-ret' | 'cab' | 'hotel' | null>(null);
 
@@ -993,8 +1015,12 @@ export function UnifiedReviewScreen() {
           <div style={{ fontSize: '14px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
             Review & Confirm
           </div>
-          <div style={{ fontSize: '11px', color: tm.textSecondary, fontFamily: fonts.mono }}>
-            Mumbai · Apr 15
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '3px' }}>
+            <Clock size={10} color={timerColor()} />
+            <span style={{ fontSize: '12px', fontFamily: fonts.mono, fontWeight: 800, color: timerColor(), letterSpacing: '0.04em' }}>
+              {timerLabel()}
+            </span>
+            <span style={{ fontSize: '10px', color: tm.textSecondary, fontFamily: fonts.mono }}>· Booking Held</span>
           </div>
         </div>
         <div style={{ width: '32px' }} />
@@ -1010,7 +1036,7 @@ export function UnifiedReviewScreen() {
             background: isDark ? '#3B82F60A' : '#EFF6FF',
             border: '1px solid #3B82F630',
             borderRadius: '20px',
-            padding: '14px 16px 18px',
+            padding: '14px 16px 12px',
             marginBottom: '12px',
           }}
         >
@@ -1024,8 +1050,25 @@ export function UnifiedReviewScreen() {
               <Plane size={15} color="#3B82F6" />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
-                Flights
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '13px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary }}>
+                  Flights
+                </span>
+                {flightExpanded && (
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    background: '#f8f8f8', border: `1px solid ${tm.borderSubtle}`,
+                    borderRadius: '8px', padding: '5px 12px',
+                  }}>
+                    {flightIndex === 0
+                      ? <Plane size={11} color={tm.accentAmber} />
+                      : <Plane size={11} color={tm.accentTeal} style={{ transform: 'scaleX(-1)' }} />
+                    }
+                    <span style={{ fontSize: '11px', fontFamily: fonts.mono, fontWeight: 700, color: tm.textPrimary, letterSpacing: '0.05em' }}>
+                      {flightIndex === 0 ? 'OUTBOUND' : 'RETURN'}
+                    </span>
+                  </div>
+                )}
               </div>
               {(selFlight || selReturn) && (
                 <div style={{ fontSize: '10px', fontFamily: fonts.mono, color: tm.textSecondary, marginTop: '1px' }}>
@@ -1080,23 +1123,6 @@ export function UnifiedReviewScreen() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
-                {/* Direction chip */}
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                    background: '#f8f8f8', border: `1px solid ${tm.borderSubtle}`,
-                    borderRadius: '8px', padding: '5px 12px',
-                  }}>
-                    {flightIndex === 0
-                      ? <Plane size={11} color={tm.accentAmber} />
-                      : <Plane size={11} color={tm.accentTeal} style={{ transform: 'scaleX(-1)' }} />
-                    }
-                    <span style={{ fontSize: '11px', fontFamily: fonts.mono, fontWeight: 700, color: tm.textPrimary, letterSpacing: '0.05em' }}>
-                      {flightIndex === 0 ? 'OUTBOUND' : 'RETURN'}
-                    </span>
-                  </div>
-                </div>
-
                 <AnimatePresence mode="wait">
                   {flightIndex === 0 ? (
                     <motion.div key="outbound" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.18 }}>
@@ -1474,7 +1500,7 @@ export function UnifiedReviewScreen() {
           style={{
             background: `${tm.accentAmber}10`, border: `1px solid ${tm.accentAmber}30`,
             borderLeft: `3px solid ${tm.accentAmber}`, borderRadius: '14px', overflow: 'hidden',
-            marginBottom: '16px',
+            marginBottom: '8px',
           }}
         >
           <button
@@ -1629,13 +1655,27 @@ export function UnifiedReviewScreen() {
                   <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: tm.borderSubtle }} />
                 </div>
 
-                {/* Title */}
-                <h3 style={{
-                  fontSize: '16px', fontFamily: fonts.heading, fontWeight: 800,
-                  color: tm.textPrimary, margin: '6px 0 18px',
-                }}>
-                  Payment Summary
-                </h3>
+                {/* Title row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '6px 0 18px' }}>
+                  <h3 style={{
+                    fontSize: '16px', fontFamily: fonts.heading, fontWeight: 800,
+                    color: tm.textPrimary, margin: 0,
+                  }}>
+                    Payment Summary
+                  </h3>
+                  <motion.button
+                    whileTap={{ scale: 0.88 }}
+                    onClick={() => setConfirmOpen(false)}
+                    style={{
+                      width: '28px', height: '28px', borderRadius: '50%',
+                      background: tm.bgElevated, border: `1px solid ${tm.borderSubtle}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', flexShrink: 0,
+                    }}
+                  >
+                    <X size={13} color={tm.textSecondary} />
+                  </motion.button>
+                </div>
 
                 {/* Line items */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '11px', marginBottom: '16px' }}>
@@ -1897,6 +1937,67 @@ export function UnifiedReviewScreen() {
         onKeep={() => setNavConfirm(null)}
         onExit={() => { setNavConfirm(null); navigate('/'); }}
       />
+
+      {/* ── Timer expired sheet ── */}
+      <AnimatePresence>
+        {timerExpired && (
+          <>
+            <motion.div
+              key="timer-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 60 }}
+            />
+            <motion.div
+              key="timer-sheet"
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 61,
+                background: tm.bgSurface, borderRadius: '22px 22px 0 0',
+                padding: '28px 24px 36px',
+                boxShadow: '0 -8px 40px rgba(0,0,0,0.22)',
+              }}
+            >
+              {/* Drag handle */}
+              <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: tm.borderSubtle, margin: '0 auto 24px' }} />
+
+              {/* Icon */}
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '16px',
+                background: '#EF444418', border: '1px solid #EF444435',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 18px',
+              }}>
+                <Clock size={26} color="#EF4444" />
+              </div>
+
+              {/* Text */}
+              <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+                <div style={{ fontSize: '17px', fontFamily: fonts.heading, fontWeight: 700, color: tm.textPrimary, marginBottom: '8px' }}>
+                  Booking lock expired
+                </div>
+                <div style={{ fontSize: '13px', color: tm.textSecondary, fontFamily: fonts.body, lineHeight: 1.6 }}>
+                  Your price lock of 10 minutes has expired. Availability and prices may have changed — please start a new search.
+                </div>
+              </div>
+
+              {/* CTA */}
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/')}
+                style={{
+                  width: '100%', padding: '15px',
+                  background: '#EF4444', border: 'none', borderRadius: '14px',
+                  fontSize: '15px', fontFamily: fonts.heading, fontWeight: 700,
+                  color: '#fff', cursor: 'pointer',
+                }}
+              >
+                Start over
+              </motion.button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
     </div>
   );
